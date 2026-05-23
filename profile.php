@@ -383,12 +383,6 @@ require_once 'includes/header.php';
         font-weight: 600;
     }
     
-    .profile-nav-icon {
-        font-size: 18px;
-        width: 24px;
-        text-align: center;
-    }
-    
     /* Основной контент */
     .profile-content {
         flex: 1;
@@ -695,11 +689,6 @@ require_once 'includes/header.php';
             font-size: 12px;
             padding: 9px 10px;
         }
-
-        .profile-nav-icon {
-            width: 20px;
-            font-size: 16px;
-        }
     }
 </style>
 
@@ -726,13 +715,13 @@ require_once 'includes/header.php';
             </div>
             <nav class="profile-nav">
                 <a href="/profile.php?tab=profile" class="<?php echo $active_tab === 'profile' ? 'active' : ''; ?>">
-                    <span class="profile-nav-icon">👤</span> Профиль
+                    Профиль
                 </a>
                 <a href="/profile.php?tab=cars" class="<?php echo $active_tab === 'cars' ? 'active' : ''; ?>">
-                    <span class="profile-nav-icon">🚗</span> Мои автомобили
+                    Мои автомобили
                 </a>
                 <a href="/profile.php?tab=appointments" class="<?php echo $active_tab === 'appointments' ? 'active' : ''; ?>">
-                    <span class="profile-nav-icon">📅</span> Мои записи
+                   Мои записи
                     <?php if ($stats['pending'] > 0): ?>
                         <span style="background: var(--primary); color: white; border-radius: 12px; padding: 2px 8px; font-size: 11px; margin-left: auto;">
                             <?php echo $stats['pending']; ?>
@@ -740,13 +729,13 @@ require_once 'includes/header.php';
                     <?php endif; ?>
                 </a>
                 <a href="/profile.php?tab=reviews" class="<?php echo $active_tab === 'reviews' ? 'active' : ''; ?>">
-                    <span class="profile-nav-icon">⭐</span> Мои отзывы
+                    Мои отзывы
                 </a>
             </nav>
         </div>
         
         <a href="/appointment.php" class="btn btn-primary" style="width: 100%; text-align: center;">
-            ✏️ Записаться на сервис
+            Записаться на сервис
         </a>
     </aside>
     
@@ -756,13 +745,13 @@ require_once 'includes/header.php';
         <!-- Сообщения об успехе/ошибке -->
         <?php if ($success_message): ?>
             <div style="background: #d4edda; color: #155724; padding: 14px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #28a745;">
-                ✅ <?php echo $success_message; ?>
+                <?php echo $success_message; ?>
             </div>
         <?php endif; ?>
         
         <?php if ($error_message): ?>
             <div style="background: #f8d7da; color: #721c24; padding: 14px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #dc3545;">
-                ⚠️ <?php echo $error_message; ?>
+                <?php echo $error_message; ?>
             </div>
         <?php endif; ?>
         
@@ -844,7 +833,7 @@ require_once 'includes/header.php';
                 
                 <hr style="border: none; border-top: 1px solid var(--gray-200); margin: 24px 0;">
                 
-                <h3 style="font-size: 16px; margin-bottom: 16px;">🔒 Смена пароля</h3>
+                <h3 style="font-size: 16px; margin-bottom: 16px;">Смена пароля</h3>
                 <p style="font-size: 13px; color: var(--gray-500); margin-bottom: 16px;">Оставьте поля пустыми, если не хотите менять пароль.</p>
                 
                 <div class="form-group">
@@ -857,11 +846,11 @@ require_once 'includes/header.php';
                     <input type="password" name="new_password" placeholder="Минимум 6 символов" minlength="6">
                 </div>
                 
-                <button type="submit" class="btn btn-primary" style="margin-top: 8px;">💾 Сохранить изменения</button>
+                <button type="submit" class="btn btn-primary" style="margin-top: 8px;">Сохранить изменения</button>
             </form>
             
             <div style="margin-top: 20px; padding: 16px; background: var(--gray-100); border-radius: 8px; font-size: 13px; color: var(--gray-700);">
-                <strong>📅 Дата регистрации:</strong> <?php echo date('d.m.Y H:i', strtotime($user['created_at'])); ?>
+                <strong>Дата регистрации:</strong> <?php echo date('d.m.Y H:i', strtotime($user['created_at'])); ?>
             </div>
         </div>
         
@@ -870,7 +859,7 @@ require_once 'includes/header.php';
         elseif ($active_tab === 'cars'): 
         ?>
         <div class="profile-content-card">
-            <h2>🚗 Мои автомобили</h2>
+            <h2>Мои автомобили</h2>
             
             <?php if (empty($cars)): ?>
                 <p style="text-align: center; color: var(--gray-500); padding: 40px;">
@@ -887,7 +876,7 @@ require_once 'includes/header.php';
                                 <?php endif; ?>
                                 <br>
                                 <?php if ($car['license_plate']): ?>
-                                    <span style="font-size: 13px; color: var(--gray-500);">🚘 <?php echo htmlspecialchars($car['license_plate']); ?></span>
+                                    <span style="font-size: 13px; color: var(--gray-500);"><?php echo htmlspecialchars($car['license_plate']); ?></span>
                                 <?php endif; ?>
                                 <?php if ($car['vin']): ?>
                                     <span style="font-size: 13px; color: var(--gray-500); margin-left: 10px;">VIN: <?php echo htmlspecialchars($car['vin']); ?></span>
@@ -905,7 +894,7 @@ require_once 'includes/header.php';
                 </div>
             <?php endif; ?>
             
-            <h3 style="font-size: 18px; margin-bottom: 16px;">➕ Добавить автомобиль</h3>
+            <h3 style="font-size: 18px; margin-bottom: 16px;">Добавить автомобиль</h3>
             <form method="POST" action="/profile.php?tab=cars">
                 <input type="hidden" name="action" value="add_car">
                 
@@ -936,7 +925,7 @@ require_once 'includes/header.php';
                     <input type="text" name="vin" placeholder="17 символов" maxlength="17">
                 </div>
                 
-                <button type="submit" class="btn btn-primary">➕ Добавить автомобиль</button>
+                <button type="submit" class="btn btn-primary">Добавить автомобиль</button>
             </form>
         </div>
         
@@ -945,7 +934,7 @@ require_once 'includes/header.php';
         elseif ($active_tab === 'appointments'): 
         ?>
         <div class="profile-content-card">
-            <h2>📅 Мои записи</h2>
+            <h2>Мои записи</h2>
             
             <!-- Мини-статистика -->
             <div class="stats-mini-grid">
@@ -1035,7 +1024,7 @@ require_once 'includes/header.php';
             $review_appointment_id = isset($_GET['appointment']) ? intval($_GET['appointment']) : 0;
         ?>
         <div class="profile-content-card">
-            <h2>⭐ Мои отзывы</h2>
+            <h2>Мои отзывы</h2>
             
             <!-- Список моих отзывов -->
             <?php if (empty($reviews)): ?>
@@ -1059,9 +1048,9 @@ require_once 'includes/header.php';
                         <p style="font-size: 14px; color: var(--gray-700);"><?php echo nl2br(htmlspecialchars($review['text'])); ?></p>
                         <div style="margin-top: 8px;">
                             <?php if ($review['is_approved']): ?>
-                                <span class="review-status approved">✅ Опубликован</span>
+                                <span class="review-status approved">Опубликован</span>
                             <?php else: ?>
-                                <span class="review-status pending">⏳ На модерации</span>
+                                <span class="review-status pending">На модерации</span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -1069,7 +1058,7 @@ require_once 'includes/header.php';
             <?php endif; ?>
             
             <!-- Форма нового отзыва -->
-            <h3 style="font-size: 18px; margin-top: 30px; margin-bottom: 16px;">✍️ Новый отзыв</h3>
+            <h3 style="font-size: 18px; margin-top: 30px; margin-bottom: 16px;">Новый отзыв</h3>
             
             <form method="POST" action="/profile.php?tab=reviews">
                 <input type="hidden" name="action" value="add_review">
@@ -1109,7 +1098,7 @@ require_once 'includes/header.php';
                     <textarea name="review_text" rows="4" placeholder="Расскажите о вашем опыте..." required></textarea>
                 </div>
                 
-                <button type="submit" class="btn btn-primary">📤 Отправить отзыв</button>
+                <button type="submit" class="btn btn-primary">Отправить отзыв</button>
             </form>
         </div>
         

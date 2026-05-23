@@ -59,7 +59,10 @@ $form_errors = [];
 // Обработка формы записи
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_appointment') {
     
-    $car_id = intval($_POST['car_id'] ?? 0);
+    // Получаем сырое значение car_id для проверки 'new'
+    $car_id_raw = $_POST['car_id'] ?? '';
+    $car_id = intval($car_id_raw);
+    
     $new_car_brand = trim($_POST['new_car_brand'] ?? '');
     $new_car_model = trim($_POST['new_car_model'] ?? '');
     $new_car_year = intval($_POST['new_car_year'] ?? 0);
@@ -74,7 +77,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     // === ВАЛИДАЦИЯ ===
     
     $final_car_id = null;
-    if ($car_id === 'new') {
+    
+    // Проверяем по сырому значению (строка 'new' или число)
+    if ($car_id_raw === 'new') {
+        // Добавление нового автомобиля
         if (empty($new_car_brand) || empty($new_car_model)) {
             $form_errors['car'] = 'Укажите марку и модель автомобиля';
         } else {
@@ -92,9 +98,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $final_car_id = $pdo->lastInsertId();
             } catch (PDOException $e) {
                 $form_errors['car'] = 'Ошибка при добавлении автомобиля';
+                error_log('Ошибка создания записи (добавление авто): ' . $e->getMessage());
             }
         }
-    } else {
+    } elseif ($car_id > 0) {
+        // Выбор существующего автомобиля
         $stmt = $pdo->prepare("SELECT id FROM cars WHERE id = :id AND user_id = :uid");
         $stmt->execute(['id' => $car_id, 'uid' => $user['id']]);
         $car = $stmt->fetch();
@@ -103,6 +111,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         } else {
             $form_errors['car'] = 'Выбранный автомобиль не найден';
         }
+    } else {
+        $form_errors['car'] = 'Выберите автомобиль или добавьте новый';
     }
     
     if (empty($service_ids) || !is_array($service_ids)) {
@@ -124,12 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $form_errors['date'] = 'Выберите дату визита';
     } elseif (strtotime($appointment_date) < strtotime(date('Y-m-d'))) {
         $form_errors['date'] = 'Нельзя записаться на прошедшую дату';
-    } else {
-        $day_of_week = date('N', strtotime($appointment_date));
-        $stmt = $pdo->prepare("SELECT id FROM work_schedule WHERE day_of_week = :day");
-        $stmt->execute(['day' => $day_of_week]);
-        // СТО работает ежедневно: если отдельной записи в таблице нет,
-        // используем стандартный график и не блокируем выбор даты.
     }
     
     if (empty($appointment_time)) {
@@ -271,7 +275,7 @@ require_once 'includes/header.php';
 
     .search-box input {
         width: 100%;
-        padding: 12px 16px 12px 44px;
+        padding: 12px 16px 12px 10px;
         border: 1px solid var(--gray-300);
         border-radius: 10px;
         font-size: 15px;
@@ -286,15 +290,7 @@ require_once 'includes/header.php';
         box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.08);
     }
 
-    .search-icon {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 18px;
-        color: var(--gray-500);
-        pointer-events: none;
-    }
+    
 
     /* ========== КАТЕГОРИИ-АККОРДЕОНЫ ========== */
     .category-accordion {
@@ -529,13 +525,6 @@ require_once 'includes/header.php';
         color: #4caf50;
     }
 
-    .no-services-message {
-        text-align: center;
-        padding: 30px;
-        color: var(--gray-400);
-        font-size: 15px;
-    }
-
     /* ========== СЛОТЫ ВРЕМЕНИ ========== */
     .time-slots-grid {
         display: grid;
@@ -693,13 +682,13 @@ require_once 'includes/header.php';
 
 <div class="appointment-page">
 
-    <h1>✏️ Онлайн-запись на обслуживание</h1>
-    <p class="appointment-subtitle">Выберите нужные услуги, автомобиль и удобное время — мы всё сделаем в лучшем виде</p>
+    <h1>Онлайн-запись на обслуживание</h1>
+    <p class="appointment-subtitle">Выберите нужные услуги, автомобиль и удобное время</p>
 
     <!-- Сообщения -->
     <?php if ($success_message): ?>
         <div style="background: #d4edda; color: #155724; padding: 20px; border-radius: 12px; margin-bottom: 22px; border-left: 4px solid #28a745; font-size: 15px;">
-            <strong>✅ <?php echo $success_message; ?></strong>
+            <strong><?php echo $success_message; ?></strong>
             <br><br>
             <a href="/profile.php?tab=appointments" class="btn btn-primary" style="display: inline-block;">Перейти к моим записям</a>
         </div>
@@ -707,7 +696,7 @@ require_once 'includes/header.php';
 
     <?php if ($error_message): ?>
         <div style="background: #f8d7da; color: #721c24; padding: 14px; border-radius: 8px; margin-bottom: 22px; border-left: 4px solid #dc3545;">
-            ⚠️ <?php echo $error_message; ?>
+            <?php echo $error_message; ?>
         </div>
     <?php endif; ?>
 
@@ -717,38 +706,22 @@ require_once 'includes/header.php';
 
         <!-- ====== ШАГ 1: ВЫБОР УСЛУГ ====== -->
         <div class="step-card" id="step1">
-            <h2> <span class="step-title-text">Выберите услуги</span></h2>
+            <h2><span class="step-title-text">1. Выберите услуги</span></h2>
 
             <?php if (isset($form_errors['services'])): ?>
                 <p style="color: #dc3545; font-size: 13px; margin-bottom: 12px;"><?php echo $form_errors['services']; ?></p>
             <?php endif; ?>
 
-            <!-- Поиск услуг -->
             <div class="search-box">
-                <span class="search-icon">🔍</span>
                 <input type="text" id="serviceSearch" placeholder="Поиск услуги по названию...">
             </div>
 
-            <!-- Категории-аккордеоны -->
             <div id="categoriesContainer">
                 <?php foreach ($grouped_services as $cat_id => $cat_data): ?>
                     <?php if (empty($cat_data['services'])) continue; ?>
-                    <?php
-                    $icons = [
-                        1 => '🔌', 2 => '🛠️', 3 => '⚙️', 4 => '🔧',
-                        5 => '🔄', 6 => '🛞', 7 => '🎨', 8 => '⚡'
-                    ];
-                    $colors = [
-                        1 => '#e3f2fd', 2 => '#e8f5e9', 3 => '#fff3e0', 4 => '#fce4ec',
-                        5 => '#f3e5f5', 6 => '#e0f7fa', 7 => '#fff8e1', 8 => '#efebe9'
-                    ];
-                    ?>
                     <div class="category-accordion" data-category="<?php echo $cat_id; ?>">
                         <div class="category-header" onclick="toggleCategory(this)">
                             <div class="category-header-left">
-                                <div class="category-icon" style="background: <?php echo $colors[$cat_id] ?? '#f5f5f5'; ?>;">
-                                    <?php echo $icons[$cat_id] ?? '📋'; ?>
-                                </div>
                                 <div class="category-info">
                                     <h3><?php echo htmlspecialchars($cat_data['name']); ?></h3>
                                     <span><?php echo count($cat_data['services']); ?> услуг</span>
@@ -773,7 +746,7 @@ require_once 'includes/header.php';
                                         </div>
                                         <div class="service-item-meta">
                                             <div class="svc-price"><?php echo number_format($svc['price'], 0, ',', ' '); ?> ₽</div>
-                                            <div class="svc-duration">⏱ <?php echo $svc['duration']; ?> мин.</div>
+                                            <div class="svc-duration"><?php echo $svc['duration']; ?> мин.</div>
                                         </div>
                                     </label>
                                 <?php endforeach; ?>
@@ -784,10 +757,9 @@ require_once 'includes/header.php';
             </div>
 
             <div id="noServicesFound" style="display:none; text-align:center; padding:20px; color:var(--gray-400);">
-                🔍 Услуги не найдены. Попробуйте изменить запрос.
+                Услуги не найдены. Попробуйте изменить запрос.
             </div>
 
-            <!-- Итого -->
             <div class="services-summary" id="servicesSummary">
                 <div class="services-summary-left">
                     <div class="summary-item">
@@ -805,7 +777,7 @@ require_once 'includes/header.php';
 
         <!-- ====== ШАГ 2: АВТОМОБИЛЬ ====== -->
         <div class="step-card" id="step2">
-            <h2> <span class="step-title-text">Выберите автомобиль</span></h2>
+            <h2><span class="step-title-text">2. Выберите автомобиль</span></h2>
 
             <?php if (isset($form_errors['car'])): ?>
                 <p style="color: #dc3545; font-size: 13px; margin-bottom: 12px;"><?php echo $form_errors['car']; ?></p>
@@ -814,8 +786,7 @@ require_once 'includes/header.php';
             <?php if (!empty($cars)): ?>
                 <div style="display: grid; gap: 10px; margin-bottom: 16px;">
                     <?php foreach ($cars as $car): ?>
-                        <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 2px solid var(--gray-200); border-radius: 10px; cursor: pointer; transition: var(--transition);"
-                               onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--gray-200)'">
+                        <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 2px solid var(--gray-200); border-radius: 10px; cursor: pointer;">
                             <input type="radio" name="car_id" value="<?php echo $car['id']; ?>" 
                                    <?php echo count($cars) === 1 ? 'checked' : ''; ?>
                                    onchange="document.getElementById('newCarFields').style.display='none'">
@@ -824,8 +795,8 @@ require_once 'includes/header.php';
                                 <?php if ($car['year']): ?>(<?php echo $car['year']; ?>)<?php endif; ?>
                                 <?php if ($car['license_plate'] || $car['vin']): ?>
                                     <br><small style="color: var(--gray-500);">
-                                        <?php if ($car['license_plate']): ?>🚘 <?php echo htmlspecialchars($car['license_plate']); ?><?php endif; ?>
-                                        <?php if ($car['vin']): ?> · VIN: <?php echo htmlspecialchars($car['vin']); ?><?php endif; ?>
+                                        <?php if ($car['license_plate']): ?><?php echo htmlspecialchars($car['license_plate']); ?><?php endif; ?>
+                                        <?php if ($car['vin']): ?> VIN: <?php echo htmlspecialchars($car['vin']); ?><?php endif; ?>
                                     </small>
                                 <?php endif; ?>
                             </div>
@@ -836,11 +807,10 @@ require_once 'includes/header.php';
                 <p style="color: var(--gray-500); margin-bottom: 16px;">У вас пока нет добавленных автомобилей.</p>
             <?php endif; ?>
 
-            <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 2px dashed var(--gray-300); border-radius: 10px; cursor: pointer;"
-                   onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--gray-300)'">
+            <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 2px dashed var(--gray-300); border-radius: 10px; cursor: pointer;">
                 <input type="radio" name="car_id" value="new" onchange="document.getElementById('newCarFields').style.display='block'"
                        <?php echo empty($cars) ? 'checked' : ''; ?>>
-                <strong>➕ Добавить новый автомобиль</strong>
+                <strong>Добавить новый автомобиль</strong>
             </label>
 
             <div id="newCarFields" style="display: <?php echo empty($cars) ? 'block' : 'none'; ?>; margin-top: 14px;">
@@ -859,7 +829,7 @@ require_once 'includes/header.php';
                     </div>
                     <div>
                         <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">Госномер</label>
-                        <input type="text" name="new_car_plate" placeholder="А123БВ177" maxlength="10" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
+                        <input type="text" name="new_car_plate" placeholder="A123BB177" maxlength="10" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
                     </div>
                 </div>
                 <div style="margin-top: 12px;">
@@ -871,7 +841,7 @@ require_once 'includes/header.php';
 
         <!-- ====== ШАГ 3: ДАТА И ВРЕМЯ ====== -->
         <div class="step-card" id="step3">
-            <h2> <span class="step-title-text">Выберите дату и время</span></h2>
+            <h2><span class="step-title-text">3. Выберите дату и время</span></h2>
 
             <div style="margin-bottom: 16px;">
                 <label style="font-weight: 600; display: block; margin-bottom: 6px;">Дата визита</label>
@@ -901,12 +871,12 @@ require_once 'includes/header.php';
 
         <!-- ====== ШАГ 4: ПРИМЕЧАНИЯ ====== -->
         <div class="step-card">
-            <h2> <span class="step-title-text">Примечания к записи</span></h2>
+            <h2><span class="step-title-text">4. Примечания к записи</span></h2>
             <textarea name="notes" rows="3" placeholder="Опишите проблему или особые пожелания (необязательно)..." 
                       style="width: 100%; padding: 12px 14px; border: 1px solid var(--gray-300); border-radius: 10px; font-family: inherit; font-size: 14px; resize: vertical;"></textarea>
         </div>
 
-        <button type="submit" class="submit-btn">✅ Подтвердить запись</button>
+        <button type="submit" class="submit-btn">Подтвердить запись</button>
     </form>
 </div>
 
@@ -942,7 +912,6 @@ document.getElementById('serviceSearch').addEventListener('input', function() {
         });
 
         acc.style.display = categoryHasVisible ? '' : 'none';
-        // Открываем категорию, где есть совпадения
         if (categoryHasVisible && query !== '') {
             acc.classList.add('open');
         }
@@ -958,20 +927,15 @@ function onServiceChange(checkbox) {
     const categoryAccordion = checkbox.closest('.category-accordion');
     const catId = checkbox.dataset.category;
 
-    // Визуал выбора
     if (checkbox.checked) {
         serviceItem.classList.add('selected');
     } else {
         serviceItem.classList.remove('selected');
     }
 
-    // Обновление бейджа категории
     updateCategoryBadge(categoryAccordion, catId);
-
-    // Обновление сводки
     updateSummary();
 
-    // Перезагрузка слотов при необходимости
     const dateInput = document.getElementById('appointmentDate');
     if (dateInput.value) {
         loadTimeSlots();
@@ -982,7 +946,7 @@ function updateCategoryBadge(accordion, catId) {
     const checkedInCategory = document.querySelectorAll(`input[data-category="${catId}"]:checked`).length;
     if (checkedInCategory > 0) {
         accordion.classList.add('has-selected');
-        accordion.querySelector('.category-badge').textContent = `Выбрано: ${checkedInCategory}`;
+        accordion.querySelector('.category-badge').textContent = 'Выбрано: ' + checkedInCategory;
     } else {
         accordion.classList.remove('has-selected');
     }
@@ -1050,7 +1014,7 @@ async function loadTimeSlots() {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'time-slot-btn';
-            btn.textContent = slot.time + '–' + slot.end_time;
+            btn.textContent = slot.time + '-' + slot.end_time;
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.time-slot-btn.selected').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
@@ -1073,22 +1037,22 @@ document.getElementById('appointmentForm').addEventListener('submit', function(e
 
     const checkedServices = document.querySelectorAll('.service-item input:checked');
     if (checkedServices.length === 0) {
-        errors.push('• Выберите хотя бы одну услугу');
+        errors.push('- Выберите хотя бы одну услугу');
     }
 
     const carSelected = document.querySelector('input[name="car_id"]:checked');
     if (!carSelected) {
-        errors.push('• Выберите автомобиль');
+        errors.push('- Выберите автомобиль');
     }
 
     const date = document.getElementById('appointmentDate').value;
     if (!date) {
-        errors.push('• Выберите дату визита');
+        errors.push('- Выберите дату визита');
     }
 
     const time = document.getElementById('selectedTime').value;
     if (!time) {
-        errors.push('• Выберите время визита');
+        errors.push('- Выберите время визита');
     }
 
     if (errors.length > 0) {
@@ -1098,7 +1062,6 @@ document.getElementById('appointmentForm').addEventListener('submit', function(e
 });
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
-// Восстанавливаем состояние при загрузке (если были ошибки и форма перезагрузилась)
 document.querySelectorAll('.service-item input:checked').forEach(cb => {
     cb.closest('.service-item').classList.add('selected');
     const catId = cb.dataset.category;
@@ -1107,7 +1070,6 @@ document.querySelectorAll('.service-item input:checked').forEach(cb => {
 });
 updateSummary();
 
-// Если есть выбранная дата и услуги — загружаем слоты
 const savedDate = document.getElementById('appointmentDate').value;
 if (savedDate && parseInt(document.getElementById('totalDuration').textContent) > 0) {
     loadTimeSlots();

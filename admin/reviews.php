@@ -26,9 +26,7 @@ function getReviewsStats(PDO $pdo): array {
     ];
 }
 
-// ============================================================
 // AJAX-ОБРАБОТЧИКИ
-// ============================================================
 
 // Одобрение/отклонение отзыва
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && in_array($_POST['action'], ['approve', 'reject'])) {
@@ -91,9 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-// ============================================================
 // ФИЛЬТРАЦИЯ И ПАГИНАЦИЯ
-// ============================================================
 
 $filter_status = $_GET['status'] ?? 'all';
 $filter_rating = isset($_GET['rating']) ? intval($_GET['rating']) : 0;
@@ -611,27 +607,27 @@ function buildUrl($params = []) {
         <aside class="admin-sidebar">
             <div class="sidebar-title">Панель управления</div>
             <nav class="sidebar-nav">
-                <a href="/admin/index.php">📊 Дашборд</a>
-                <a href="/admin/appointments.php">📅 Записи</a>
-                <a href="/admin/services.php">🔧 Услуги</a>
-                <a href="/admin/categories.php">📂 Категории</a>
+                <a href="/admin/index.php">Дашборд</a>
+                <a href="/admin/appointments.php">Записи</a>
+                <a href="/admin/services.php">Услуги</a>
+                <a href="/admin/categories.php">Категории</a>
                 <a href="/admin/reviews.php" class="active">
-                    ⭐ Отзывы
+                    Отзывы
                     <span class="nav-badge" id="pendingNavBadge" style="<?php echo $stats['pending'] > 0 ? '' : 'display:none;'; ?>">
                         <?php echo $stats['pending']; ?>
                     </span>
                 </a>
-                <a href="/admin/users.php">👥 Клиенты</a>
+                <a href="/admin/users.php">Клиенты</a>
                 <hr class="sidebar-divider">
-                <a href="/index.php">🏠 На сайт</a>
-                <a href="/logout.php">🚪 Выйти</a>
+                <a href="/index.php">На сайт</a>
+                <a href="/logout.php">Выйти</a>
             </nav>
         </aside>
 
         <main class="admin-content">
             
             <div class="admin-header">
-                <h1>⭐ Модерация отзывов</h1>
+                <h1>Модерация отзывов</h1>
             </div>
 
             <!-- Статистика -->
@@ -660,10 +656,10 @@ function buildUrl($params = []) {
                     Все <span class="count" id="tabCountAll"><?php echo $stats['total']; ?></span>
                 </a>
                 <a href="<?php echo buildUrl(['status' => 'pending']); ?>" class="status-tab <?php echo $filter_status === 'pending' ? 'active' : ''; ?>">
-                    ⏳ На модерации <span class="count" id="tabCountPending"><?php echo $stats['pending']; ?></span>
+                    На модерации <span class="count" id="tabCountPending"><?php echo $stats['pending']; ?></span>
                 </a>
                 <a href="<?php echo buildUrl(['status' => 'approved']); ?>" class="status-tab <?php echo $filter_status === 'approved' ? 'active' : ''; ?>">
-                    ✅ Одобрены <span class="count" id="tabCountApproved"><?php echo $stats['approved']; ?></span>
+                    Одобрены <span class="count" id="tabCountApproved"><?php echo $stats['approved']; ?></span>
                 </a>
             </div>
 
@@ -671,12 +667,12 @@ function buildUrl($params = []) {
             <form method="GET" action="/admin/reviews.php" class="filters-bar">
                 <input type="hidden" name="status" value="<?php echo htmlspecialchars($filter_status); ?>">
                 <div class="filter-group" style="flex:1; min-width:180px;">
-                    <label>🔍 Поиск</label>
+                    <label>Поиск</label>
                     <input type="text" name="search" placeholder="Имя клиента или текст отзыва..." 
                            value="<?php echo htmlspecialchars($search); ?>">
                 </div>
                 <div class="filter-group" style="min-width:120px;">
-                    <label>⭐ Рейтинг</label>
+                    <label>Рейтинг</label>
                     <select name="rating">
                         <option value="0">Любой</option>
                         <?php for ($i = 5; $i >= 1; $i--): ?>
@@ -719,7 +715,7 @@ function buildUrl($params = []) {
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <span class="status-badge-mini <?php echo $is_pending ? 'badge-pending' : 'badge-approved'; ?>" 
                                           id="status-badge-<?php echo $review['id']; ?>">
-                                        <?php echo $is_pending ? '⏳ На модерации' : '✅ Одобрен'; ?>
+                                        <?php echo $is_pending ? 'На модерации' : 'Одобрен'; ?>
                                     </span>
                                     <span class="review-rating">
                                         <?php echo str_repeat('★', $review['rating']) . str_repeat('☆', 5 - $review['rating']); ?>
@@ -733,11 +729,11 @@ function buildUrl($params = []) {
 
                             <div class="review-meta">
                                 <?php if ($review['appointment_date']): ?>
-                                    <span>📅 Визит: <?php echo date('d.m.Y', strtotime($review['appointment_date'])); ?></span>
+                                    <span>Визит: <?php echo date('d.m.Y', strtotime($review['appointment_date'])); ?></span>
                                 <?php endif; ?>
                                 <?php if (!empty($review['services_list'])): ?>
                                     <span class="review-service-tag">
-                                        🔧 <?php echo htmlspecialchars(mb_substr($review['services_list'], 0, 50)); ?>
+                                         <?php echo htmlspecialchars(mb_substr($review['services_list'], 0, 50)); ?>
                                     </span>
                                 <?php endif; ?>
                             </div>
@@ -745,18 +741,18 @@ function buildUrl($params = []) {
                             <div class="review-actions" style="margin-top: 12px;" id="actions-<?php echo $review['id']; ?>">
                                 <?php if ($is_pending): ?>
                                     <button class="btn btn-sm btn-approve" onclick="moderateReview(<?php echo $review['id']; ?>, 'approve')">
-                                        ✅ Одобрить
+                                        Одобрить
                                     </button>
                                     <button class="btn btn-sm btn-reject" onclick="moderateReview(<?php echo $review['id']; ?>, 'reject')">
-                                        ⏳ Отклонить
+                                        Отклонить
                                     </button>
                                 <?php else: ?>
                                     <button class="btn btn-sm btn-reject" onclick="moderateReview(<?php echo $review['id']; ?>, 'reject')">
-                                        ↩️ Вернуть на модерацию
+                                        Вернуть на модерацию
                                     </button>
                                 <?php endif; ?>
                                 <button class="btn btn-sm btn-delete" onclick="deleteReview(<?php echo $review['id']; ?>)">
-                                    🗑️ Удалить
+                                    Удалить
                                 </button>
                             </div>
                         </div>
@@ -794,7 +790,6 @@ function buildUrl($params = []) {
 
             <?php else: ?>
                 <div class="empty-state">
-                    <div style="font-size: 48px; margin-bottom: 12px;">⭐</div>
                     <p>Отзывов не найдено</p>
                     <small>Измените параметры фильтрации</small>
                 </div>
@@ -860,31 +855,31 @@ function buildUrl($params = []) {
 
                 if (data.is_approved) {
                     badge.className = 'status-badge-mini badge-approved';
-                    badge.textContent = '✅ Одобрен';
+                    badge.textContent = 'Одобрен';
                     card.classList.remove('pending');
                     card.classList.add('approved');
                     actions.innerHTML = `
                         <button class="btn btn-sm btn-reject" onclick="moderateReview(${reviewId}, 'reject')">
-                            ↩️ Вернуть на модерацию
+                            Вернуть на модерацию
                         </button>
                         <button class="btn btn-sm btn-delete" onclick="deleteReview(${reviewId})">
-                            🗑️ Удалить
+                            Удалить
                         </button>
                     `;
                 } else {
                     badge.className = 'status-badge-mini badge-pending';
-                    badge.textContent = '⏳ На модерации';
+                    badge.textContent = 'На модерации';
                     card.classList.add('pending');
                     card.classList.remove('approved');
                     actions.innerHTML = `
                         <button class="btn btn-sm btn-approve" onclick="moderateReview(${reviewId}, 'approve')">
-                            ✅ Одобрить
+                            Одобрить
                         </button>
                         <button class="btn btn-sm btn-reject" onclick="moderateReview(${reviewId}, 'reject')">
-                            ⏳ Отклонить
+                            Отклонить
                         </button>
                         <button class="btn btn-sm btn-delete" onclick="deleteReview(${reviewId})">
-                            🗑️ Удалить
+                            Удалить
                         </button>
                     `;
                 }

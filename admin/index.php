@@ -258,13 +258,6 @@ $top_services = $pdo->query("
             transform: translateY(-1px);
         }
 
-        .metric-card .metric-icon {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            font-size: 28px;
-            opacity: 0.2;
-        }
 
         .metric-card .metric-label {
             font-size: 12px;
@@ -627,35 +620,35 @@ $top_services = $pdo->query("
             <div class="sidebar-title">Панель управления</div>
             <nav class="sidebar-nav">
                 <a href="/admin/index.php" class="active">
-                    📊 Дашборд
+                    Дашборд
                 </a>
                 <a href="/admin/appointments.php">
-                    📅 Записи
+                    Записи
                     <?php if ($appointments_stats['pending'] > 0): ?>
                         <span class="nav-badge"><?php echo $appointments_stats['pending']; ?></span>
                     <?php endif; ?>
                 </a>
                 <a href="/admin/services.php">
-                    🔧 Услуги
+                    Услуги
                 </a>
                 <a href="/admin/categories.php">
-                    📂 Категории
+                    Категории
                 </a>
                 <a href="/admin/reviews.php">
-                    ⭐ Отзывы
+                    Отзывы
                     <?php if ($reviews_pending > 0): ?>
                         <span class="nav-badge"><?php echo $reviews_pending; ?></span>
                     <?php endif; ?>
                 </a>
                 <a href="/admin/users.php">
-                    👥 Клиенты
+                    Клиенты
                 </a>
                 <hr class="sidebar-divider">
                 <a href="/index.php">
-                    🏠 На сайт
+                    На сайт
                 </a>
                 <a href="/logout.php">
-                    🚪 Выйти
+                    Выйти
                 </a>
             </nav>
         </aside>
@@ -665,7 +658,7 @@ $top_services = $pdo->query("
             
             <div class="admin-header">
                 <div>
-                    <h1>📊 Дашборд</h1>
+                    <h1>Дашборд</h1>
                     <span class="date-info"><?php echo date('d.m.Y, l'); ?> · Добро пожаловать, <?php echo htmlspecialchars($_SESSION['user_name']); ?>!</span>
                 </div>
             </div>
@@ -673,32 +666,26 @@ $top_services = $pdo->query("
             <!-- Метрики -->
             <div class="metrics-grid">
                 <div class="metric-card accent">
-                    <div class="metric-icon">📅</div>
                     <div class="metric-label">Записи сегодня</div>
                     <div class="metric-value"><?php echo $appointments_stats['today']; ?></div>
                 </div>
                 <div class="metric-card warning">
-                    <div class="metric-icon">⏳</div>
                     <div class="metric-label">Ожидают</div>
                     <div class="metric-value"><?php echo $appointments_stats['pending']; ?></div>
                 </div>
                 <div class="metric-card success">
-                    <div class="metric-icon">✅</div>
                     <div class="metric-label">Выполнено</div>
                     <div class="metric-value"><?php echo $appointments_stats['completed']; ?></div>
                 </div>
                 <div class="metric-card info">
-                    <div class="metric-icon">💰</div>
                     <div class="metric-label">Выручка за месяц</div>
                     <div class="metric-value"><?php echo number_format($month_revenue, 0, ',', ' '); ?> ₽</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-icon">👥</div>
                     <div class="metric-label">Клиентов</div>
                     <div class="metric-value"><?php echo $clients_count; ?></div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-icon">⭐</div>
                     <div class="metric-label">Средний рейтинг</div>
                     <div class="metric-value"><?php echo $avg_rating ?: '—'; ?></div>
                 </div>
@@ -709,7 +696,7 @@ $top_services = $pdo->query("
                 
                 <!-- График за 7 дней -->
                 <div class="admin-card">
-                    <h3>📈 Активность за 7 дней</h3>
+                    <h3>Активность за 7 дней</h3>
                     
                     <?php 
                     $max_value = max(array_column($week_data, 'total')) ?: 1;
@@ -747,7 +734,7 @@ $top_services = $pdo->query("
 
                 <!-- Топ услуг -->
                 <div class="admin-card">
-                    <h3>🔥 Топ услуг за месяц</h3>
+                    <h3>Топ услуг за месяц</h3>
                     <?php if (count($top_services) > 0): ?>
                         <div class="top-services-list">
                             <?php foreach ($top_services as $index => $svc): ?>
@@ -770,7 +757,7 @@ $top_services = $pdo->query("
 
             <!-- Таблица: Записи на сегодня -->
             <div class="admin-card" style="margin-bottom: 20px;">
-                <h3>📋 Записи на сегодня (<?php echo date('d.m.Y'); ?>)</h3>
+                <h3>Записи на сегодня (<?php echo date('d.m.Y'); ?>)</h3>
                 
                 <?php if (count($today_appointments) > 0): ?>
                     <div class="table-wrapper">
@@ -823,13 +810,13 @@ $top_services = $pdo->query("
                         </table>
                     </div>
                 <?php else: ?>
-                    <p class="no-data">📭 На сегодня записей нет</p>
+                    <p class="no-data">На сегодня записей нет</p>
                 <?php endif; ?>
             </div>
 
             <!-- Отзывы на модерации -->
             <div class="admin-card">
-                <h3>💬 Отзывы на модерации (<?php echo $reviews_pending; ?>)</h3>
+                <h3>Отзывы на модерации (<?php echo $reviews_pending; ?>)</h3>
                 
                 <?php if (count($pending_reviews) > 0): ?>
                     <?php foreach ($pending_reviews as $review): ?>
@@ -843,7 +830,7 @@ $top_services = $pdo->query("
                     <?php endforeach; ?>
                     <a href="/admin/reviews.php" style="display: block; margin-top: 12px; color: var(--primary); font-size: 14px; font-weight: 500;">Перейти к модерации →</a>
                 <?php else: ?>
-                    <p class="no-data">✅ Все отзывы обработаны</p>
+                    <p class="no-data">Все отзывы обработаны</p>
                 <?php endif; ?>
             </div>
 

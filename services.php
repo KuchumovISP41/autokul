@@ -137,7 +137,7 @@ require_once 'includes/header.php';
 
     .search-wrapper input {
         width: 100%;
-        padding: 10px 14px 10px 40px;
+        padding: 10px 14px;
         border: 1px solid #d0d4d8;
         border-radius: 8px;
         font-size: 14px;
@@ -150,20 +150,6 @@ require_once 'includes/header.php';
         border-color: #cc3333;
         background: #ffffff;
         box-shadow: 0 0 0 3px rgba(204, 51, 51, 0.06);
-    }
-
-    .search-wrapper .search-icon {
-        position: absolute;
-        left: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #999;
-        pointer-events: none;
-    }
-
-    .search-wrapper .search-icon svg {
-        width: 18px;
-        height: 18px;
     }
 
     .sort-select {
@@ -453,39 +439,28 @@ require_once 'includes/header.php';
 
     <!-- Фильтры -->
     <div class="filters-panel">
-        <form method="GET" action="/services.php" id="filterForm">
-            <div class="filters-row">
-                <div class="search-wrapper">
-                    <span class="search-icon">
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-                        </svg>
-                    </span>
-                    <input type="text" name="search" placeholder="Поиск услуги по названию или описанию..." 
-                           value="<?php echo htmlspecialchars($search_query); ?>" oninput="this.form.submit()">
-                </div>
-                <select name="sort" class="sort-select" onchange="this.form.submit()">
-                    <option value="name" <?php echo $sort_by === 'name' ? 'selected' : ''; ?>>По названию (А-Я)</option>
-                    <option value="price_asc" <?php echo $sort_by === 'price_asc' ? 'selected' : ''; ?>>Цена: по возрастанию</option>
-                    <option value="price_desc" <?php echo $sort_by === 'price_desc' ? 'selected' : ''; ?>>Цена: по убыванию</option>
-                    <option value="duration" <?php echo $sort_by === 'duration' ? 'selected' : ''; ?>>По длительности</option>
-                </select>
+        <div class="filters-row">
+            <div class="search-wrapper">
+                <input type="text" id="serviceSearch" placeholder="Поиск услуги по названию или описанию...">
             </div>
-        </form>
+            <select name="sort" id="sortSelect" class="sort-select">
+                <option value="name" <?php echo $sort_by === 'name' ? 'selected' : ''; ?>>По названию (А-Я)</option>
+                <option value="price_asc" <?php echo $sort_by === 'price_asc' ? 'selected' : ''; ?>>Цена: по возрастанию</option>
+                <option value="price_desc" <?php echo $sort_by === 'price_desc' ? 'selected' : ''; ?>>Цена: по убыванию</option>
+                <option value="duration" <?php echo $sort_by === 'duration' ? 'selected' : ''; ?>>По длительности</option>
+            </select>
+        </div>
 
-        <div class="category-tabs">
-            <a href="/services.php<?php echo !empty($search_query) ? '?search=' . urlencode($search_query) : ''; ?>" 
-               class="category-tab <?php echo $active_category === 0 ? 'active' : ''; ?>">
+        <div class="category-tabs" id="categoryTabs">
+            <a href="#" data-category="0" class="category-tab <?php echo $active_category === 0 ? 'active' : ''; ?>">
                 Все услуги
                 <span class="tab-count"><?php echo count($all_services); ?></span>
             </a>
             <?php foreach ($categories as $cat): 
                 $cat_count = isset($services_by_category[$cat['id']]) ? count($services_by_category[$cat['id']]) : 0;
                 if ($cat_count === 0) continue;
-                $url = '/services.php?category=' . $cat['id'];
-                if (!empty($search_query)) $url .= '&search=' . urlencode($search_query);
             ?>
-                <a href="<?php echo $url; ?>" class="category-tab <?php echo $active_category === (int)$cat['id'] ? 'active' : ''; ?>">
+                <a href="#" data-category="<?php echo $cat['id']; ?>" class="category-tab <?php echo $active_category === (int)$cat['id'] ? 'active' : ''; ?>">
                     <?php echo htmlspecialchars($cat['name']); ?>
                     <span class="tab-count"><?php echo $cat_count; ?></span>
                 </a>
@@ -494,12 +469,16 @@ require_once 'includes/header.php';
     </div>
 
     <!-- Сетка услуг -->
-    <?php if (count($filtered_services) > 0): ?>
-        <div class="services-grid">
+    <div id="servicesGrid" class="services-grid">
+        <?php if (count($filtered_services) > 0): ?>
             <?php foreach ($filtered_services as $svc): 
                 $image_url = getServiceImage($svc['image']);
             ?>
-                <div class="service-card">
+                <div class="service-card" data-name="<?php echo mb_strtolower(htmlspecialchars($svc['name'])); ?>" 
+                     data-desc="<?php echo mb_strtolower(htmlspecialchars($svc['description'] ?: '')); ?>"
+                     data-category="<?php echo $svc['category_id']; ?>"
+                     data-price="<?php echo $svc['price']; ?>"
+                     data-duration="<?php echo $svc['duration']; ?>">
                     <div class="service-image-wrapper">
                         <img src="<?php echo htmlspecialchars($image_url); ?>" 
                              alt="<?php echo htmlspecialchars($svc['name']); ?>"
@@ -518,7 +497,6 @@ require_once 'includes/header.php';
                                 <?php echo number_format($svc['price'], 0, ',', ' '); ?> <span>₽</span>
                             </div>
                             <div class="service-duration">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
                                 <?php echo $svc['duration']; ?> мин.
                             </div>
                         </div>
@@ -526,18 +504,119 @@ require_once 'includes/header.php';
                     </div>
                 </div>
             <?php endforeach; ?>
-        </div>
-    <?php else: ?>
-        <div class="empty-state">
-            <div style="font-size: 48px; margin-bottom: 12px; opacity: 0.4;">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <?php else: ?>
+            <div class="empty-state" id="emptyState">
+                <h3>Услуги не найдены</h3>
+                <p>Измените параметры поиска или выберите другую категорию</p>
             </div>
-            <h3>Услуги не найдены</h3>
-            <p>Измените параметры поиска или выберите другую категорию</p>
-        </div>
-    <?php endif; ?>
-
+        <?php endif; ?>
+    </div>
 </section>
+
+<script>
+// Данные всех карточек услуг
+const allCards = Array.from(document.querySelectorAll('.service-card'));
+const servicesGrid = document.getElementById('servicesGrid');
+const searchInput = document.getElementById('serviceSearch');
+const sortSelect = document.getElementById('sortSelect');
+const categoryTabs = document.getElementById('categoryTabs');
+
+let currentCategory = <?php echo $active_category; ?>;
+let currentSearch = '';
+let currentSort = '<?php echo $sort_by; ?>';
+
+// Функция фильтрации
+function filterServices() {
+    let visibleCards = [...allCards];
+    const searchLower = currentSearch.toLowerCase().trim();
+    
+    // Фильтрация по категории
+    if (currentCategory > 0) {
+        visibleCards = visibleCards.filter(card => 
+            parseInt(card.dataset.category) === currentCategory
+        );
+    }
+    
+    // Фильтрация по поиску
+    if (searchLower !== '') {
+        visibleCards = visibleCards.filter(card => {
+            const name = card.dataset.name || '';
+            const desc = card.dataset.desc || '';
+            return name.includes(searchLower) || desc.includes(searchLower);
+        });
+    }
+    
+    // Сортировка
+    visibleCards.sort((a, b) => {
+        switch (currentSort) {
+            case 'price_asc':
+                return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+            case 'price_desc':
+                return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+            case 'duration':
+                return parseFloat(a.dataset.duration) - parseFloat(b.dataset.duration);
+            default: // name
+                return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+        }
+    });
+    
+    // Обновляем отображение
+    servicesGrid.innerHTML = '';
+    
+    if (visibleCards.length === 0) {
+        servicesGrid.innerHTML = `
+            <div class="empty-state">
+                <h3>Услуги не найдены</h3>
+                <p>Измените параметры поиска или выберите другую категорию</p>
+            </div>
+        `;
+    } else {
+        visibleCards.forEach(card => {
+            servicesGrid.appendChild(card);
+        });
+    }
+}
+
+// Обработчик поиска (мгновенный, без потери фокуса)
+searchInput.addEventListener('input', function() {
+    currentSearch = this.value;
+    filterServices();
+});
+
+// Обработчик сортировки
+sortSelect.addEventListener('change', function() {
+    currentSort = this.value;
+    filterServices();
+});
+
+// Обработчик категорий
+categoryTabs.addEventListener('click', function(e) {
+    e.preventDefault();
+    const tab = e.target.closest('.category-tab');
+    if (!tab) return;
+    
+    const category = parseInt(tab.dataset.category);
+    currentCategory = category;
+    
+    // Обновляем активный класс у табов
+    document.querySelectorAll('.category-tab').forEach(t => {
+        t.classList.remove('active');
+    });
+    tab.classList.add('active');
+    
+    filterServices();
+});
+
+// Сохраняем фокус на поле поиска при перерисовке
+// (перерисовка происходит через filterServices, но DOM элементы не пересоздаются, только перемещаются)
+// Поэтому фокус не теряется
+
+// Инициализация - убеждаемся что поле поиска не пустое
+if (searchInput.value) {
+    currentSearch = searchInput.value;
+    filterServices();
+}
+</script>
 
 <?php
 require_once 'includes/footer.php';

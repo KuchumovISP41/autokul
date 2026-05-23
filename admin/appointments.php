@@ -570,11 +570,6 @@ function buildUrl($params = []) {
             color: #9e9e9e;
         }
 
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-        }
-
         /* Адаптивность */
         @media (max-width: 768px) {
             .admin-wrapper {
@@ -640,20 +635,20 @@ function buildUrl($params = []) {
         <aside class="admin-sidebar">
             <div class="sidebar-title">Панель управления</div>
             <nav class="sidebar-nav">
-                <a href="/admin/index.php">📊 Дашборд</a>
+                <a href="/admin/index.php">Дашборд</a>
                 <a href="/admin/appointments.php" class="active">
-                    📅 Записи
+                    Записи
                     <?php if ($status_counts['pending'] > 0): ?>
                         <span class="nav-badge"><?php echo $status_counts['pending']; ?></span>
                     <?php endif; ?>
                 </a>
-                <a href="/admin/services.php">🔧 Услуги</a>
-                <a href="/admin/categories.php">📂 Категории</a>
-                <a href="/admin/reviews.php">⭐ Отзывы</a>
-                <a href="/admin/users.php">👥 Клиенты</a>
+                <a href="/admin/services.php">Услуги</a>
+                <a href="/admin/categories.php">Категории</a>
+                <a href="/admin/reviews.php">Отзывы</a>
+                <a href="/admin/users.php">Клиенты</a>
                 <hr class="sidebar-divider">
-                <a href="/index.php">🏠 На сайт</a>
-                <a href="/logout.php">🚪 Выйти</a>
+                <a href="/index.php">На сайт</a>
+                <a href="/logout.php">Выйти</a>
             </nav>
         </aside>
 
@@ -661,7 +656,7 @@ function buildUrl($params = []) {
         <main class="admin-content">
             
             <div class="admin-header">
-                <h1>📅 Управление записями</h1>
+                <h1>Управление записями</h1>
                 <span style="color: #9e9e9e; font-size: 14px;">
                     Всего: <?php echo $status_counts['total']; ?> записей
                 </span>
@@ -675,23 +670,23 @@ function buildUrl($params = []) {
                 </a>
                 <a href="<?php echo buildUrl(['status' => 'pending', 'page' => 1]); ?>" 
                    class="status-tab <?php echo $filter_status === 'pending' ? 'active' : ''; ?>">
-                    ⏳ Ожидают <span class="count"><?php echo $status_counts['pending']; ?></span>
+                    Ожидают <span class="count"><?php echo $status_counts['pending']; ?></span>
                 </a>
                 <a href="<?php echo buildUrl(['status' => 'confirmed', 'page' => 1]); ?>" 
                    class="status-tab <?php echo $filter_status === 'confirmed' ? 'active' : ''; ?>">
-                    ✅ Подтверждены <span class="count"><?php echo $status_counts['confirmed']; ?></span>
+                    Подтверждены <span class="count"><?php echo $status_counts['confirmed']; ?></span>
                 </a>
                 <a href="<?php echo buildUrl(['status' => 'in_progress', 'page' => 1]); ?>" 
                    class="status-tab <?php echo $filter_status === 'in_progress' ? 'active' : ''; ?>">
-                    🔧 В работе <span class="count"><?php echo $status_counts['in_progress']; ?></span>
+                    В работе <span class="count"><?php echo $status_counts['in_progress']; ?></span>
                 </a>
                 <a href="<?php echo buildUrl(['status' => 'completed', 'page' => 1]); ?>" 
                    class="status-tab <?php echo $filter_status === 'completed' ? 'active' : ''; ?>">
-                    ✔️ Выполнены <span class="count"><?php echo $status_counts['completed']; ?></span>
+                    Выполнены <span class="count"><?php echo $status_counts['completed']; ?></span>
                 </a>
                 <a href="<?php echo buildUrl(['status' => 'cancelled', 'page' => 1]); ?>" 
                    class="status-tab <?php echo $filter_status === 'cancelled' ? 'active' : ''; ?>">
-                    ❌ Отменены <span class="count"><?php echo $status_counts['cancelled']; ?></span>
+                    Отменены <span class="count"><?php echo $status_counts['cancelled']; ?></span>
                 </a>
             </div>
 
@@ -700,16 +695,16 @@ function buildUrl($params = []) {
                 <input type="hidden" name="status" value="<?php echo htmlspecialchars($filter_status); ?>">
                 <div class="filters-row">
                     <div class="filter-group" style="flex: 1; min-width: 200px;">
-                        <label>🔍 Поиск</label>
+                        <label>Поиск</label>
                         <input type="text" name="search" placeholder="Имя, email, телефон, авто..." 
                                value="<?php echo htmlspecialchars($search); ?>">
                     </div>
                     <div class="filter-group">
-                        <label>📅 Дата с</label>
+                        <label>Дата с</label>
                         <input type="date" name="date_from" value="<?php echo htmlspecialchars($filter_date_from); ?>">
                     </div>
                     <div class="filter-group">
-                        <label>📅 Дата по</label>
+                        <label>Дата по</label>
                         <input type="date" name="date_to" value="<?php echo htmlspecialchars($filter_date_to); ?>">
                     </div>
                     <div class="filter-group" style="align-self: flex-end;">
@@ -756,7 +751,7 @@ function buildUrl($params = []) {
                                                 <small><?php echo $appt['year']; ?> г.</small>
                                             <?php endif; ?>
                                             <?php if ($appt['license_plate']): ?>
-                                                <small>🚘 <?php echo htmlspecialchars($appt['license_plate']); ?></small>
+                                                <small><?php echo htmlspecialchars($appt['license_plate']); ?></small>
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -773,11 +768,11 @@ function buildUrl($params = []) {
                                             <span class="status-badge status-<?php echo $appt['status']; ?>" id="status-badge-<?php echo $appt['id']; ?>">
                                                 <?php 
                                                 $status_labels = [
-                                                    'pending' => '⏳ Ожидает',
-                                                    'confirmed' => '✅ Подтверждена',
-                                                    'in_progress' => '🔧 В работе',
-                                                    'completed' => '✔️ Выполнена',
-                                                    'cancelled' => '❌ Отменена'
+                                                    'pending' => 'Ожидает',
+                                                    'confirmed' => 'Подтверждена',
+                                                    'in_progress' => 'В работе',
+                                                    'completed' => 'Выполнена',
+                                                    'cancelled' => 'Отменена'
                                                 ];
                                                 echo $status_labels[$appt['status']] ?? $appt['status'];
                                                 ?>
@@ -791,11 +786,11 @@ function buildUrl($params = []) {
                                                 <div class="status-dropdown-menu" id="dropdown-<?php echo $appt['id']; ?>">
                                                     <?php 
                                                     $all_statuses = [
-                                                        'pending' => '⏳ Ожидает',
-                                                        'confirmed' => '✅ Подтверждена',
-                                                        'in_progress' => '🔧 В работе',
-                                                        'completed' => '✔️ Выполнена',
-                                                        'cancelled' => '❌ Отменена'
+                                                        'pending' => 'Ожидает',
+                                                        'confirmed' => 'Подтверждена',
+                                                        'in_progress' => 'В работе',
+                                                        'completed' => 'Выполнена',
+                                                        'cancelled' => 'Отменена'
                                                     ];
                                                     foreach ($all_statuses as $value => $label): 
                                                         if ($value === $appt['status']) continue;
@@ -848,7 +843,6 @@ function buildUrl($params = []) {
 
                 <?php else: ?>
                     <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
                         <p>Записей не найдено</p>
                         <small>Попробуйте изменить параметры фильтрации</small>
                     </div>
@@ -910,11 +904,11 @@ function buildUrl($params = []) {
                 // Обновляем бейдж статуса
                 const badge = document.getElementById('status-badge-' + appointmentId);
                 const statusLabels = {
-                    'pending': '⏳ Ожидает',
-                    'confirmed': '✅ Подтверждена',
-                    'in_progress': '🔧 В работе',
-                    'completed': '✔️ Выполнена',
-                    'cancelled': '❌ Отменена'
+                    'pending': 'Ожидает',
+                    'confirmed': 'Подтверждена',
+                    'in_progress': 'В работе',
+                    'completed': 'Выполнена',
+                    'cancelled': 'Отменена'
                 };
                 
                 badge.className = 'status-badge status-' + newStatus;

@@ -58,22 +58,18 @@ require_once 'includes/header.php';
         </div>
         <div class="advantages-grid">
             <div class="advantage-card">
-                <div class="advantage-icon">🧰</div>
                 <h3>Профильные мастера</h3>
                 <p>Работаем с чёткими регламентами: диагностика, согласование и только потом ремонт</p>
             </div>
             <div class="advantage-card">
-                <div class="advantage-icon">🧾</div>
                 <h3>Прозрачная смета</h3>
                 <p>Фиксируем стоимость до начала работ и объясняем, из чего складывается итоговая цена</p>
             </div>
             <div class="advantage-card">
-                <div class="advantage-icon">⏱️</div>
                 <h3>Пунктуальные сроки</h3>
                 <p>Планируем загрузку постов заранее и держим вас в курсе статуса на каждом этапе</p>
             </div>
             <div class="advantage-card">
-                <div class="advantage-icon">🛡️</div>
                 <h3>Гарантия и поддержка</h3>
                 <p>После обслуживания остаёмся на связи и помогаем по вопросам эксплуатации</p>
             </div>

@@ -9,9 +9,7 @@ requireAuth('admin');
 $page_title = 'Управление категориями — Панель управления';
 $pdo = getDBConnection();
 
-// ============================================================
 // AJAX-ОБРАБОТЧИКИ (до любого вывода HTML)
-// ============================================================
 
 // AJAX: получение данных категории для редактирования
 if (isset($_GET['edit']) && isset($_GET['ajax']) && $_GET['ajax'] == '1') {
@@ -29,9 +27,7 @@ if (isset($_GET['edit']) && isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     exit;
 }
 
-// ============================================================
 // ОБРАБОТКА POST-ЗАПРОСОВ
-// ============================================================
 
 $message = '';
 $message_type = '';
@@ -73,20 +69,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 // Редактирование
                 $stmt = $pdo->prepare("UPDATE categories SET name = :name, description = :desc WHERE id = :id");
                 $stmt->execute(['name' => $name, 'desc' => $description, 'id' => $category_id]);
-                $message = '✅ Категория «' . htmlspecialchars($name) . '» обновлена!';
+                $message = 'Категория «' . htmlspecialchars($name) . '» обновлена!';
             } else {
                 // Добавление
                 $stmt = $pdo->prepare("INSERT INTO categories (name, description) VALUES (:name, :desc)");
                 $stmt->execute(['name' => $name, 'desc' => $description]);
-                $message = '✅ Категория «' . htmlspecialchars($name) . '» добавлена!';
+                $message = 'Категория «' . htmlspecialchars($name) . '» добавлена!';
             }
             $message_type = 'success';
         } catch (PDOException $e) {
-            $message = '❌ Ошибка базы данных: ' . $e->getMessage();
+            $message = 'Ошибка базы данных: ' . $e->getMessage();
             $message_type = 'error';
         }
     } else {
-        $message = '⚠️ ' . implode('<br>• ', $errors);
+        $message = '' . implode('<br>• ', $errors);
         $message_type = 'error';
     }
     
@@ -113,23 +109,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $services_count = $check_stmt->fetchColumn();
         
         if ($services_count > 0) {
-            $message = '⚠️ Нельзя удалить категорию, в которой есть ' . $services_count . ' услуг(а). Сначала переместите или удалите услуги.';
+            $message = 'Нельзя удалить категорию, в которой есть ' . $services_count . ' услуг(а). Сначала переместите или удалите услуги.';
             $message_type = 'warning';
         } else {
             $stmt = $pdo->prepare("DELETE FROM categories WHERE id = :id");
             $stmt->execute(['id' => $category_id]);
-            $message = '🗑️ Категория успешно удалена.';
+            $message = 'Категория успешно удалена.';
             $message_type = 'success';
         }
     } catch (PDOException $e) {
-        $message = '❌ Ошибка при удалении: ' . $e->getMessage();
+        $message = 'Ошибка при удалении: ' . $e->getMessage();
         $message_type = 'error';
     }
 }
 
-// ============================================================
 // ПОЛУЧАЕМ КАТЕГОРИИ С ПОДСЧЁТОМ УСЛУГ
-// ============================================================
 
 $categories = $pdo->query("
     SELECT c.*, 
@@ -520,23 +514,23 @@ $total_services = array_sum(array_column($categories, 'services_count'));
         <aside class="admin-sidebar">
             <div class="sidebar-title">Панель управления</div>
             <nav class="sidebar-nav">
-                <a href="/admin/index.php">📊 Дашборд</a>
-                <a href="/admin/appointments.php">📅 Записи</a>
-                <a href="/admin/services.php">🔧 Услуги</a>
-                <a href="/admin/categories.php" class="active">📂 Категории</a>
-                <a href="/admin/reviews.php">⭐ Отзывы</a>
-                <a href="/admin/users.php">👥 Клиенты</a>
+                <a href="/admin/index.php">Дашборд</a>
+                <a href="/admin/appointments.php">Записи</a>
+                <a href="/admin/services.php">Услуги</a>
+                <a href="/admin/categories.php" class="active">Категории</a>
+                <a href="/admin/reviews.php">Отзывы</a>
+                <a href="/admin/users.php">Клиенты</a>
                 <hr class="sidebar-divider">
-                <a href="/index.php">🏠 На сайт</a>
-                <a href="/logout.php">🚪 Выйти</a>
+                <a href="/index.php">На сайт</a>
+                <a href="/logout.php">Выйти</a>
             </nav>
         </aside>
 
         <main class="admin-content">
             
             <div class="admin-header">
-                <h1>📂 Управление категориями</h1>
-                <button class="btn btn-primary" onclick="openModal()">➕ Добавить категорию</button>
+                <h1>Управление категориями</h1>
+                <button class="btn btn-primary" onclick="openModal()">Добавить категорию</button>
             </div>
 
             <?php if ($message): ?>
@@ -548,21 +542,18 @@ $total_services = array_sum(array_column($categories, 'services_count'));
             <!-- Статистика -->
             <div class="stats-row">
                 <div class="stat-card">
-                    <div class="stat-icon red">📂</div>
                     <div class="stat-info">
                         <div class="stat-value"><?php echo $total_categories; ?></div>
                         <div class="stat-label">Всего категорий</div>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon blue">🔧</div>
                     <div class="stat-info">
                         <div class="stat-value"><?php echo $total_services; ?></div>
                         <div class="stat-label">Всего услуг</div>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon green">✅</div>
                     <div class="stat-info">
                         <div class="stat-value"><?php echo array_sum(array_column($categories, 'active_count')); ?></div>
                         <div class="stat-label">Активных услуг</div>
@@ -624,7 +615,6 @@ $total_services = array_sum(array_column($categories, 'services_count'));
                     </div>
                 <?php else: ?>
                     <div class="empty-state">
-                        <div style="font-size: 48px; margin-bottom: 12px;">📂</div>
                         <p>Категорий пока нет</p>
                         <small>Добавьте первую категорию, чтобы начать добавлять услуги</small>
                     </div>
@@ -637,7 +627,7 @@ $total_services = array_sum(array_column($categories, 'services_count'));
     <!-- Модальное окно -->
     <div class="modal-overlay" id="categoryModal">
         <div class="modal">
-            <h2 id="modalTitle">➕ Добавить категорию</h2>
+            <h2 id="modalTitle">Добавить категорию</h2>
             <form id="categoryForm">
                 <input type="hidden" name="action" value="save_category">
                 <input type="hidden" name="category_id" id="categoryId" value="0">
@@ -660,7 +650,7 @@ $total_services = array_sum(array_column($categories, 'services_count'));
                 
                 <div class="modal-actions">
                     <button type="button" class="btn btn-outline" onclick="closeModal()">Отмена</button>
-                    <button type="submit" class="btn btn-primary">💾 Сохранить</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
                 </div>
             </form>
         </div>
@@ -681,7 +671,7 @@ $total_services = array_sum(array_column($categories, 'services_count'));
         document.getElementById('categoryName').focus();
         
         if (categoryId) {
-            title.textContent = '✏️ Редактировать категорию';
+            title.textContent = 'Редактировать категорию';
             // Загружаем данные через AJAX
             fetch(`/admin/categories.php?edit=${categoryId}&ajax=1`)
                 .then(res => {
@@ -702,7 +692,7 @@ $total_services = array_sum(array_column($categories, 'services_count'));
                     alert('Не удалось загрузить данные категории');
                 });
         } else {
-            title.textContent = '➕ Добавить категорию';
+            title.textContent = 'Добавить категорию';
         }
         
         modal.classList.add('show');
@@ -733,7 +723,7 @@ $total_services = array_sum(array_column($categories, 'services_count'));
     // ========== УДАЛЕНИЕ ==========
     function deleteCategory(categoryId, categoryName, servicesCount) {
         if (servicesCount > 0) {
-            alert(`⚠️ Нельзя удалить категорию «${categoryName}».\n\nВ ней находится ${servicesCount} услуг(а).\nСначала переместите или удалите эти услуги.`);
+            alert(`Нельзя удалить категорию «${categoryName}».\n\nВ ней находится ${servicesCount} услуг(а).\nСначала переместите или удалите эти услуги.`);
             return;
         }
         

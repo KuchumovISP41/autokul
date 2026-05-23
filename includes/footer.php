@@ -98,10 +98,10 @@ try {
                 <div class="footer-col">
                     <h3>Контакты</h3>
                     <ul>
-                        <li>📍 г. Вологда, Кирпичная ул., 48А</li>
-                        <li>📞 <a href="tel:+79001234567">+7 (900) 123-45-67</a></li>
-                        <li>✉️ <a href="mailto:info@autokul.ru">info@autokul.ru</a></li>
-                        <li>🕐 Ежедневно: 09:00 – 18:00</li>
+                        <li>г. Вологда, Кирпичная ул., 48А</li>
+                        <li><a href="tel:+79001234567">+7 (900) 123-45-67</a></li>
+                        <li><a href="mailto:info@autokul.ru">info@autokul.ru</a></li>
+                        <li>Ежедневно: 09:00 – 18:00</li>
                     </ul>
                 </div>
                 

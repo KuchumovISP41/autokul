@@ -598,12 +598,12 @@ $review_avatar = $stmt_av->fetchColumn();
 
                     <div class="review-card-footer">
                         <?php if ($has_appointment): ?>
-                            <span class="review-verified">✅ Подтверждённый клиент</span>
+                            <span class="review-verified">Подтверждённый клиент</span>
                         <?php endif; ?>
 
                         <?php if (!empty($review['services_list'])): ?>
                             <span class="review-service-badge">
-                                🔧 <?php echo htmlspecialchars(mb_substr($review['services_list'], 0, 60)); ?>
+                                <?php echo htmlspecialchars(mb_substr($review['services_list'], 0, 60)); ?>
                                 <?php echo mb_strlen($review['services_list']) > 60 ? '...' : ''; ?>
                             </span>
                         <?php endif; ?>
@@ -671,10 +671,10 @@ $review_avatar = $stmt_av->fetchColumn();
 
     <!-- CTA: Призыв оставить отзыв -->
     <div class="cta-banner">
-        <h2>Понравилась наша работа? 😊</h2>
+        <h2>Понравилась наша работа?</h2>
         <p>Расскажите о своём опыте — ваш отзыв поможет нам стать лучше, а другим клиентам — сделать правильный выбор.</p>
         <?php if (isLoggedIn()): ?>
-            <a href="/profile.php?tab=reviews" class="btn-light-lg">✍️ Оставить отзыв</a>
+            <a href="/profile.php?tab=reviews" class="btn-light-lg">Оставить отзыв</a>
         <?php else: ?>
             <a href="/login.php" class="btn-light-lg">Войти и оставить отзыв</a>
         <?php endif; ?>

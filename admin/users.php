@@ -10,9 +10,7 @@ requireAuth('admin');
 $page_title = 'Клиенты — Панель управления';
 $pdo = getDBConnection();
 
-// ============================================================
 // AJAX: получение данных клиента
-// ============================================================
 if (isset($_GET['view']) && isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     header('Content-Type: application/json; charset=utf-8');
     $user_id = intval($_GET['view']);
@@ -77,9 +75,7 @@ if (isset($_GET['view']) && isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     exit;
 }
 
-// ============================================================
 // ФИЛЬТРАЦИЯ И ПАГИНАЦИЯ
-// ============================================================
 
 $search = trim($_GET['search'] ?? '');
 $sort = $_GET['sort'] ?? 'newest';
@@ -565,22 +561,22 @@ function buildUrl($params = []) {
         <aside class="admin-sidebar">
             <div class="sidebar-title">Панель управления</div>
             <nav class="sidebar-nav">
-                <a href="/admin/index.php">📊 Дашборд</a>
-                <a href="/admin/appointments.php">📅 Записи</a>
-                <a href="/admin/services.php">🔧 Услуги</a>
-                <a href="/admin/categories.php">📂 Категории</a>
-                <a href="/admin/reviews.php">⭐ Отзывы</a>
-                <a href="/admin/users.php" class="active">👥 Клиенты</a>
+                <a href="/admin/index.php">Дашборд</a>
+                <a href="/admin/appointments.php">Записи</a>
+                <a href="/admin/services.php">Услуги</a>
+                <a href="/admin/categories.php">Категории</a>
+                <a href="/admin/reviews.php">Отзывы</a>
+                <a href="/admin/users.php" class="active">Клиенты</a>
                 <hr class="sidebar-divider">
-                <a href="/index.php">🏠 На сайт</a>
-                <a href="/logout.php">🚪 Выйти</a>
+                <a href="/index.php">На сайт</a>
+                <a href="/logout.php">Выйти</a>
             </nav>
         </aside>
 
         <main class="admin-content">
             
             <div class="admin-header">
-                <h1>👥 Клиенты</h1>
+                <h1>Клиенты</h1>
             </div>
 
             <!-- Статистика -->
@@ -602,12 +598,12 @@ function buildUrl($params = []) {
             <!-- Фильтры -->
             <form method="GET" action="/admin/users.php" class="filters-bar">
                 <div class="filter-group" style="flex:1; min-width:200px;">
-                    <label>🔍 Поиск</label>
+                    <label>Поиск</label>
                     <input type="text" name="search" placeholder="Имя, email или телефон..." 
                            value="<?php echo htmlspecialchars($search); ?>">
                 </div>
                 <div class="filter-group" style="min-width:140px;">
-                    <label>📋 Сортировка</label>
+                    <label>Сортировка</label>
                     <select name="sort" onchange="this.form.submit()">
                         <option value="newest" <?php echo $sort === 'newest' ? 'selected' : ''; ?>>Новые сначала</option>
                         <option value="oldest" <?php echo $sort === 'oldest' ? 'selected' : ''; ?>>Старые сначала</option>
@@ -689,7 +685,6 @@ function buildUrl($params = []) {
 
             <?php else: ?>
                 <div class="empty-state">
-                    <div style="font-size: 48px; margin-bottom: 12px;">👥</div>
                     <p>Клиентов не найдено</p>
                     <small>Измените параметры поиска</small>
                 </div>
@@ -714,14 +709,14 @@ function buildUrl($params = []) {
         const content = document.getElementById('clientModalContent');
         
         modal.classList.add('show');
-        content.innerHTML = '<div style="text-align:center; padding:30px;">⏳ Загрузка данных клиента...</div>';
+        content.innerHTML = '<div style="text-align:center; padding:30px;">Загрузка данных клиента...</div>';
         
         try {
             const response = await fetch(`/admin/users.php?view=${userId}&ajax=1`);
             const data = await response.json();
             
             if (data.error) {
-                content.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">❌ ${data.error}</div>`;
+                content.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">${data.error}</div>`;
                 return;
             }
             
@@ -739,7 +734,7 @@ function buildUrl($params = []) {
             };
             
             let carsHTML = cars.length > 0 
-                ? cars.map(c => `<span class="car-tag">🚗 ${c.brand} ${c.model} ${c.year || ''} ${c.license_plate ? '· ' + c.license_plate : ''}</span>`).join(' ')
+                ? cars.map(c => `<span class="car-tag"> ${c.brand} ${c.model} ${c.year || ''} ${c.license_plate ? '· ' + c.license_plate : ''}</span>`).join(' ')
                 : '<span style="color:#9e9e9e;">Нет автомобилей</span>';
             
             let appointmentsHTML = appointments.length > 0
@@ -770,13 +765,13 @@ function buildUrl($params = []) {
                 : '<p style="color:#9e9e9e; text-align:center;">Нет записей</p>';
             
             content.innerHTML = `
-                <h2>👤 ${user.full_name}</h2>
+                <h2>${user.full_name}</h2>
                 
                 <div class="detail-row"><span class="label">Email</span><span class="value">${user.email}</span></div>
                 <div class="detail-row"><span class="label">Телефон</span><span class="value">${user.phone || 'Не указан'}</span></div>
                 <div class="detail-row"><span class="label">Дата регистрации</span><span class="value">${new Date(user.created_at).toLocaleDateString('ru-RU')}</span></div>
                 
-                <h3 style="margin-top:20px; margin-bottom:10px; font-size:16px;">🚗 Автомобили (${cars.length})</h3>
+                <h3 style="margin-top:20px; margin-bottom:10px; font-size:16px;">Автомобили (${cars.length})</h3>
                 <div style="margin-bottom:16px;">${carsHTML}</div>
                 
                 <div class="stats-row">
@@ -798,7 +793,7 @@ function buildUrl($params = []) {
                     </div>
                 </div>
                 
-                <h3 style="margin-top:20px; margin-bottom:10px; font-size:16px;">📋 Последние записи</h3>
+                <h3 style="margin-top:20px; margin-bottom:10px; font-size:16px;">Последние записи</h3>
                 ${appointmentsHTML}
                 
                 <div class="modal-actions" style="margin-top:20px; text-align:right;">
@@ -808,7 +803,7 @@ function buildUrl($params = []) {
             
         } catch (err) {
             console.error('Ошибка:', err);
-            content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">❌ Ошибка загрузки данных</div>';
+            content.innerHTML = '<div style="text-align:center; padding:20px; color:#dc3545;">Ошибка загрузки данных</div>';
         }
     }
 

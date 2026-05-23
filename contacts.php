@@ -210,19 +210,6 @@ require_once 'includes/header.php';
         align-items: flex-start;
         gap: 14px;
     }
-
-    .contact-icon-box {
-        width: 44px;
-        height: 44px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        flex-shrink: 0;
-        background: var(--gray-100);
-    }
-
     .contact-info-text h3 {
         font-size: 14px;
         font-weight: 600;
@@ -482,31 +469,6 @@ require_once 'includes/header.php';
         color: #721c24;
         border-left: 4px solid #dc3545;
     }
-
-    /* ========== СХЕМА ПРОЕЗДА (ТЕКСТ) ========== */
-    .directions-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .direction-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        padding: 12px 14px;
-        background: var(--gray-100);
-        border-radius: 10px;
-        font-size: 14px;
-        color: var(--gray-700);
-    }
-
-    .direction-icon {
-        font-size: 22px;
-        flex-shrink: 0;
-        margin-top: 2px;
-    }
-
     /* ========== АДАПТИВНОСТЬ ========== */
     @media (max-width: 900px) {
         .contacts-content {
@@ -556,11 +518,6 @@ require_once 'includes/header.php';
             gap: 10px;
         }
 
-        .contact-icon-box {
-            width: 38px;
-            height: 38px;
-            font-size: 16px;
-        }
     }
 
     @media (max-width: 420px) {
@@ -598,13 +555,11 @@ require_once 'includes/header.php';
             <!-- Контактная информация -->
             <div class="info-card">
                 <h2>
-                    <span class="icon-circle icon-red">📞</span> 
                     Свяжитесь с нами
                 </h2>
 
                 <div class="contact-info-list">
                     <div class="contact-info-item">
-                        <div class="contact-icon-box">📞</div>
                         <div class="contact-info-text">
                             <h3>Телефон</h3>
                             <a href="tel:+79001234567">+7 (900) 123-45-67</a>
@@ -613,7 +568,6 @@ require_once 'includes/header.php';
                     </div>
 
                     <div class="contact-info-item">
-                        <div class="contact-icon-box">✉️</div>
                         <div class="contact-info-text">
                             <h3>Email</h3>
                             <a href="mailto:info@autokul.ru">info@autokul.ru</a>
@@ -622,16 +576,14 @@ require_once 'includes/header.php';
                     </div>
 
                     <div class="contact-info-item">
-                        <div class="contact-icon-box">📍</div>
                         <div class="contact-info-text">
                             <h3>Адрес</h3>
                             <p>г. Вологда, Кирпичная ул., 48А</p>
-                            <p style="font-size: 12px; color: var(--gray-500);">Ориентир: рядом с ТЦ "Автомир"</p>
+                            <p style="font-size: 12px; color: var(--gray-500);">Ориентир: рядом с ТЦ "Оскар"</p>
                         </div>
                     </div>
 
                     <div class="contact-info-item">
-                        <div class="contact-icon-box">💬</div>
                         <div class="contact-info-text">
                             <h3>Мы во ВКонтакте</h3>
                             <p>
@@ -645,7 +597,6 @@ require_once 'includes/header.php';
             <!-- Режим работы -->
             <div class="info-card">
                 <h2>
-                    <span class="icon-circle icon-blue">🕐</span> 
                     Режим работы
                 </h2>
 
@@ -663,30 +614,6 @@ require_once 'includes/header.php';
                     <?php endforeach; ?>
                 </div>
             </div>
-
-            <!-- Схема проезда -->
-            <div class="info-card">
-                <h2>
-                    <span class="icon-circle icon-green">🚗</span> 
-                    Как добраться
-                </h2>
-
-                <div class="directions-list">
-                    <div class="direction-item">
-                        <span class="direction-icon">🚌</span>
-                        <span>Городские маршруты до остановки «Кирпичная улица», далее 2–3 минуты пешком</span>
-                    </div>
-                    <div class="direction-item">
-                        <span class="direction-icon">🚇</span>
-                        <span>На автомобиле удобно подъехать по Кирпичной улице, ориентир — дом 48А</span>
-                    </div>
-                    <div class="direction-item">
-                        <span class="direction-icon">🅿️</span>
-                        <span>Есть парковка для клиентов рядом с сервисом</span>
-                    </div>
-                </div>
-            </div>
-
         </div>
 
         <!-- ПРАВАЯ КОЛОНКА -->
@@ -714,7 +641,6 @@ require_once 'includes/header.php';
     <!-- Форма обратной связи (внизу) -->
     <div class="info-card" style="margin-bottom: 40px;">
         <h2>
-            <span class="icon-circle icon-red">📝</span> 
             Обратная связь
         </h2>
 
@@ -724,13 +650,13 @@ require_once 'includes/header.php';
 
         <?php if ($form_success): ?>
             <div class="alert alert-success">
-                ✅ Спасибо за обращение! Мы получили ваше сообщение и свяжемся с вами в ближайшее время.
+                Спасибо за обращение! Мы получили ваше сообщение и свяжемся с вами в ближайшее время.
             </div>
         <?php endif; ?>
 
         <?php if ($form_error): ?>
             <div class="alert alert-error">
-                ⚠️ Пожалуйста, исправьте ошибки:<br><?php echo $form_error; ?>
+                Пожалуйста, исправьте ошибки:<br><?php echo $form_error; ?>
             </div>
         <?php endif; ?>
 
@@ -769,7 +695,7 @@ require_once 'includes/header.php';
                           required><?php echo htmlspecialchars($form_data['message']); ?></textarea>
             </div>
 
-            <button type="submit" class="form-submit">📤 Отправить сообщение</button>
+            <button type="submit" class="form-submit">Отправить сообщение</button>
         </form>
     </div>
 
