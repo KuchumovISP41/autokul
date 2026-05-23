@@ -143,18 +143,6 @@ require_once 'includes/header.php';
 </section>
 
 
-<section class="interactive container" style="padding:20px 16px;">
-<button id="themeToggle" class="btn btn-outline">Сменить тему</button>
-<div class="carousel" id="heroCarousel">
-  <img src="/uploads/avatars/index.jpg" class="carousel-slide active" alt="slide1">
-  <img src="/uploads/avatars/default-service.png" class="carousel-slide" alt="slide2">
-</div>
-<div style="margin-top:12px;">
-  <button class="btn btn-outline" id="viewGrid">Плитка</button>
-  <button class="btn btn-outline" id="viewList">Список</button>
-</div>
-</section>
-
 <?php
 // Подключаем подвал
 require_once 'includes/footer.php';
