@@ -56,3 +56,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Пока оставим заглушку, пригодится позже
     console.log('✅ Автокул СТО — главная страница загружена');
 });
+
+// Интерактив: тема, карусель, переключение вида, анимация при скролле
+const body = document.body;
+const toggle = document.getElementById('themeToggle');
+if (toggle) toggle.addEventListener('click', ()=> body.classList.toggle('theme-dark'));
+
+const slides = document.querySelectorAll('.carousel-slide');
+if (slides.length) {
+  let i=0; setInterval(()=>{slides[i].classList.remove('active'); i=(i+1)%slides.length; slides[i].classList.add('active');},3000);
+}
+const gridBtn=document.getElementById('viewGrid');
+const listBtn=document.getElementById('viewList');
+const servicesGrid=document.querySelector('.services-grid');
+if(gridBtn&&listBtn&&servicesGrid){
+ gridBtn.onclick=()=>{servicesGrid.classList.remove('list-view')};
+ listBtn.onclick=()=>{servicesGrid.classList.add('list-view')};
+}
+const io = new IntersectionObserver((entries)=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in-view')}),{threshold:0.1});
+document.querySelectorAll('.service-card,.advantage-card,.step-card').forEach(el=>io.observe(el));

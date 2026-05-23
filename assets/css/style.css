@@ -813,3 +813,18 @@ img {
         font-size: 18px;
     }
 }
+
+body.theme-dark{background:#121212;color:#eee}
+body.theme-dark .hero,body.theme-dark .container,body.theme-dark .service-card{background:#1f1f1f;color:#eee}
+.carousel{position:relative;height:220px;margin-top:14px;overflow:hidden;border-radius:10px}
+.carousel-slide{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s}
+.carousel-slide.active{opacity:1}
+.services-grid.list-view{display:flex;flex-direction:column;gap:12px}
+.service-card,.advantage-card,.step-card{transition:transform .4s,opacity .4s;opacity:.7;transform:translateY(14px)}
+.service-card.in-view,.advantage-card.in-view,.step-card.in-view{opacity:1;transform:translateY(0)}
+@media (max-width:768px){
+  .header-container,.container{padding-left:12px!important;padding-right:12px!important}
+  .hero-inner{display:flex;flex-direction:column}
+  .services-grid{grid-template-columns:1fr!important}
+  table{font-size:13px}
+}
