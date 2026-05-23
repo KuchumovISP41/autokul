@@ -80,4 +80,21 @@ function getCurrentUserId() {
 function getCurrentUserRole() {
     return $_SESSION['user_role'] ?? null;
 }
+
+/**
+ * Совместимость со старыми вызовами.
+ * requireLogin() = обязательная авторизация пользователя.
+ */
+function requireLogin() {
+    return requireAuth();
+}
+
+/**
+ * Совместимость со старыми вызовами.
+ * requireAdmin() = доступ только администратору.
+ */
+function requireAdmin() {
+    return requireAuth('admin');
+}
+
 ?>
