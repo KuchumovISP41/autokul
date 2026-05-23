@@ -498,7 +498,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
                         <a href="/register.php" class="btn btn-accent btn-sm">Регистрация</a>
                     <?php endif; ?>
                 </div>
-            </nav>
+            <a class="header-nav-link" href="/payments.php">Оплата</a></nav>
 
             <!-- Правая часть -->
             <div class="header-right">
