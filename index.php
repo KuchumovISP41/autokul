@@ -143,8 +143,6 @@ require_once 'includes/header.php';
 </section>
 
 
-
-
 <?php
 // Подключаем подвал
 require_once 'includes/footer.php';
