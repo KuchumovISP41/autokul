@@ -813,3 +813,12 @@ img {
         font-size: 18px;
     }
 }
+
+
+body.theme-dark { background: #121212; color: #f1f1f1; }
+body.theme-dark .site-header { background: #1f1f1f; border-bottom-color: #333; }
+body.theme-dark .header-nav { background: #2a2a2a; border-color: #3a3a3a; }
+body.theme-dark .header-nav-link { color: #ddd; }
+body.theme-dark .header-nav-link:hover { background: #333; color: #fff; }
+body.theme-dark .hero, body.theme-dark .advantages, body.theme-dark .services-preview, body.theme-dark .how-to, body.theme-dark .site-footer { background: #1a1a1a; color: #f1f1f1; }
+body.theme-dark .service-card, body.theme-dark .advantage-card, body.theme-dark .step-card { background: #242424; border-color: #333; }
