@@ -502,6 +502,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
             <!-- Правая часть -->
             <div class="header-right">
+            <button id="themeToggle" class="btn btn-outline-dark btn-sm" type="button">Тема</button>
                 
                 <!-- Телефон -->
                 <a href="tel:+79001234567" class="header-phone">

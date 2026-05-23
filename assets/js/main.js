@@ -54,5 +54,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // --- Активный пункт меню (подсветка текущего раздела при скролле) ---
     // Пока оставим заглушку, пригодится позже
+
+    // --- Смена темы без перезагрузки ---
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('theme-dark');
+        }
+        themeToggle.addEventListener('click', function() {
+            document.body.classList.toggle('theme-dark');
+            localStorage.setItem('theme', document.body.classList.contains('theme-dark') ? 'dark' : 'light');
+        });
+    }
+
     console.log('✅ Автокул СТО — главная страница загружена');
 });
