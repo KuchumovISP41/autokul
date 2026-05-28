@@ -43,3 +43,54 @@
 ## Автор
 
 Кучумов А. Н. — дипломный проект, 2024 г.
+
+## Деплой на Railway + Cloudinary
+
+Проект подготовлен к запуску в Docker-контейнере Railway. Изображения услуг и аватары сохраняются в Cloudinary, если заданы переменные `CLOUDINARY_*`; без них приложение продолжит использовать локальную папку `uploads/` для разработки.
+
+### 1. Локальные переменные
+
+Скопируйте пример окружения и заполните значения только у себя на компьютере:
+
+```bash
+cp .env.example .env
+```
+
+В `.env` укажите подключение к MySQL и Cloudinary. Реальные `API Secret`, пароли БД и другие секреты нельзя коммитить в Git.
+
+### 2. Переменные Railway
+
+В Railway откройте сервис приложения → **Variables** и добавьте:
+
+```text
+APP_ENV=production
+APP_DEBUG=false
+DB_HOST=<host from Railway MySQL>
+DB_PORT=3306
+DB_NAME=<database name>
+DB_USER=<database user>
+DB_PASS=<database password>
+CLOUDINARY_CLOUD_NAME=<cloud name from Cloudinary>
+CLOUDINARY_API_KEY=<api key from Cloudinary>
+CLOUDINARY_API_SECRET=<api secret from Cloudinary>
+CLOUDINARY_FOLDER=autokul_sto
+UPLOAD_MAX_SIZE=5242880
+```
+
+Если Railway выдаёт `DATABASE_URL` или `MYSQL_URL`, приложение также умеет читать эти переменные автоматически.
+
+### 3. Как работает хранение изображений
+
+- В существующих колонках `services.image` и `users.avatar` хранится либо старый локальный путь (`uploads/...`), либо новый `public_id` из Cloudinary.
+- Старые локальные изображения продолжают отображаться, пока файл есть в репозитории/контейнере.
+- Новые загрузки при настроенном Cloudinary будут уходить в папки `autokul_sto/services` и `autokul_sto/avatars`.
+
+### 4. Деплой
+
+Railway использует `railway.json` и `Dockerfile`. При деплое контейнер устанавливает Composer-зависимости, расширения PHP (`pdo_mysql`, `mysqli`, `gd`) и запускает Apache на порту из переменной `PORT`.
+
+```bash
+git push
+```
+
+После подключения GitHub-репозитория Railway соберёт и запустит проект автоматически.

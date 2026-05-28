@@ -5,7 +5,6 @@ desktop.ini
 
 # Локальный сервер
 OpenServer/
-.htaccess
 
 # Файлы разработки
 test_db.php
@@ -14,9 +13,12 @@ test_db.php
 # Временные файлы
 temp/
 uploads/temp/
+uploads/tmp/
 
 # Пароли и конфиденциальные данные
-includes/config.php
+.env
+.env.*
+!.env.example
 
 # Зависимости (если будут)
 vendor/
