@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
     "name": "autokul/sto",
     "description": "Auto service website",
     "type": "project",
@@ -6,4 +7,16 @@
         "vlucas/phpdotenv": "^5.5",
         "cloudinary/cloudinary_php": "^2.0"
     }
+=======
+  "require": {
+    "php": ">=8.1",
+    "cloudinary/cloudinary_php": "^2.14",
+    "vlucas/phpdotenv": "^5.6"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  },
+  "license": "proprietary"
+>>>>>>> 92fe270bd282cf3babf5a26189e869f3e03a2764
 }
