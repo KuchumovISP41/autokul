@@ -31,11 +31,17 @@ function ensureFeatureTables(PDO $pdo): void
 
 function ensureColumnExists(PDO $pdo, string $table, string $column, string $definition): void
 {
-    $stmt = $pdo->prepare("SHOW COLUMNS FROM `$table` LIKE :column");
-    $stmt->execute(['column' => $column]);
+    if (!preg_match('/^[A-Za-z0-9_]+$/', $table) || !preg_match('/^[A-Za-z0-9_]+$/', $column)) {
+        throw new InvalidArgumentException('Некорректное имя таблицы или колонки.');
+    }
 
-    if (!$stmt->fetch()) {
-        $pdo->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
+    $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND COLUMN_NAME = :column'
+    );
+    $stmt->execute(['table' => $table, 'column' => $column]);
+
+    if ((int)$stmt->fetchColumn() === 0) {
+        $pdo->exec("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$definition}");
     }
 }
 
