@@ -20,50 +20,62 @@ WORKDIR /var/www/html
 
 # Копирование composer файлов
 COPY composer.json ./
-RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+RUN if [ -f "composer.json" ]; then composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader; fi
 
 # Копирование всего проекта
 COPY . .
 
-# Создаем конфигурацию Nginx
+# Создаем конфигурацию Nginx с правильными путями
 RUN echo 'server { \
-    listen 80; \
-    server_name _; \
+    listen 80 default_server; \
+    listen [::]:80 default_server; \
     root /var/www/html; \
-    index index.php; \
+    index index.php index.html; \
+    server_name _; \
     \
     location / { \
         try_files $uri $uri/ /index.php?$query_string; \
     } \
     \
     location ~ \.php$ { \
+        include fastcgi_params; \
         fastcgi_pass 127.0.0.1:9000; \
         fastcgi_index index.php; \
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \
-        include fastcgi_params; \
-        fastcgi_read_timeout 300; \
+        fastcgi_param PATH_INFO $fastcgi_path_info; \
     } \
     \
     location ~ /\.ht { \
         deny all; \
     } \
-    \
-    location ~ /\.env { \
-        deny all; \
-    } \
 }' > /etc/nginx/sites-enabled/default
 
-# Создаем скрипт запуска
+# Удаляем дефолтный конфиг
+RUN rm -f /etc/nginx/sites-enabled/default.conf 2>/dev/null || true
+
+# Создаем правильный скрипт запуска
 RUN echo '#!/bin/sh\n\
-echo "Starting PHP-FPM..."\n\
+set -e\n\
+\n\
+# Создаем необходимые директории\n\
+mkdir -p /var/run/php\n\
+chown -R www-data:www-data /var/run/php\n\
+\n\
+# Проверяем конфигурации\n\
+nginx -t\n\
+php-fpm -t\n\
+\n\
+# Запускаем PHP-FPM в фоне\n\
 php-fpm -D\n\
-echo "Starting Nginx..."\n\
+\n\
+# Ждем запуска PHP-FPM\n\
+sleep 2\n\
+\n\
+# Запускаем Nginx в foreground\n\
 nginx -g "daemon off;"' > /start.sh && chmod +x /start.sh
 
 # Настройка прав
-RUN chown -R www-data:www-data /var/www/html && \
-    chmod -R 755 /var/www/html/storage 2>/dev/null || true && \
-    chmod -R 755 /var/www/html/uploads 2>/dev/null || true
+RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
 
