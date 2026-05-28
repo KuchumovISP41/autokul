@@ -27,8 +27,6 @@ if (isset($_GET['view']) && isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     }
     
     // Автомобили клиента
-    $cars = $pdo->prepare("SELECT * FROM cars WHERE user_id = :uid ORDER BY id")->execute(['uid' => $user_id]) 
-            ? $pdo->prepare("SELECT * FROM cars WHERE user_id = :uid ORDER BY id")->fetchAll() : [];
     $stmt_cars = $pdo->prepare("SELECT * FROM cars WHERE user_id = :uid ORDER BY id");
     $stmt_cars->execute(['uid' => $user_id]);
     $cars = $stmt_cars->fetchAll();

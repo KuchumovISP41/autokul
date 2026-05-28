@@ -1,7 +1,9 @@
 Options -Indexes
 RewriteEngine On
 
-# Redirect to HTTPS on Railway/proxies without causing a redirect loop locally.
+# Redirect to HTTPS only when the app is behind a proxy that sends X-Forwarded-Proto.
+# This avoids breaking local HTTP development.
+RewriteCond %{HTTP:X-Forwarded-Proto} !^$
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
 RewriteCond %{HTTPS} !=on
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

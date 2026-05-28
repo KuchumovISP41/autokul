@@ -64,6 +64,7 @@ define('CLOUDINARY_API_KEY', envValue('CLOUDINARY_API_KEY', ''));
 define('CLOUDINARY_API_SECRET', envValue('CLOUDINARY_API_SECRET', ''));
 define('CLOUDINARY_FOLDER', trim(envValue('CLOUDINARY_FOLDER', 'autokul_sto'), '/'));
 define('UPLOAD_MAX_SIZE', (int) envValue('UPLOAD_MAX_SIZE', 5 * 1024 * 1024));
+define('DB_AUTO_MIGRATE', filter_var(envValue('DB_AUTO_MIGRATE', true), FILTER_VALIDATE_BOOLEAN));
 
 /**
  * True when Cloudinary credentials are present and the SDK is installed.
@@ -190,24 +191,73 @@ function getStoredImageUrl(?string $storedValue, string $fallback, int $width = 
 }
 
 /**
- * Shared PDO connection factory.
+ * PDO options shared by server-level and database-level connections.
  */
-function getDBConnection(): PDO {
-    $dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
-
-    $options = [
+function getPDOOptions(): array {
+    return [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
     ];
+}
+
+/**
+ * Create the configured database if the MySQL user has enough privileges.
+ */
+function createConfiguredDatabase(): void {
+    $dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';charset=' . DB_CHARSET;
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, getPDOOptions());
+    $databaseName = str_replace('`', '``', DB_NAME);
+    $charset = preg_replace('/[^A-Za-z0-9_]/', '', DB_CHARSET) ?: 'utf8mb4';
+    $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$databaseName}` CHARACTER SET {$charset} COLLATE {$charset}_unicode_ci");
+}
+
+/**
+ * Shared PDO connection factory. On first request it can create tables and seed demo data.
+ */
+function getDBConnection(): PDO {
+    static $pdo = null;
+
+    if ($pdo instanceof PDO) {
+        return $pdo;
+    }
+
+    $dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
 
     try {
-        return new PDO($dsn, DB_USER, DB_PASS, $options);
+        $pdo = new PDO($dsn, DB_USER, DB_PASS, getPDOOptions());
     } catch (PDOException $e) {
-        error_log('DB connection error: ' . $e->getMessage());
-        if (APP_DEBUG) {
-            die('Ошибка подключения к базе данных: ' . htmlspecialchars($e->getMessage()));
+        $isUnknownDatabase = ($e->errorInfo[1] ?? null) === 1049 || str_contains($e->getMessage(), 'Unknown database');
+        if ($isUnknownDatabase && DB_AUTO_MIGRATE) {
+            try {
+                createConfiguredDatabase();
+                $pdo = new PDO($dsn, DB_USER, DB_PASS, getPDOOptions());
+            } catch (PDOException $createException) {
+                error_log('DB create/connect error: ' . $createException->getMessage());
+                renderDatabaseError($createException);
+            }
+        } else {
+            error_log('DB connection error: ' . $e->getMessage());
+            renderDatabaseError($e);
         }
-        die('Ошибка подключения к базе данных');
     }
+
+    if (DB_AUTO_MIGRATE) {
+        require_once __DIR__ . '/database_bootstrap.php';
+        try {
+            bootstrapDatabase($pdo);
+        } catch (Throwable $e) {
+            error_log('DB bootstrap error: ' . $e->getMessage());
+            renderDatabaseError($e);
+        }
+    }
+
+    return $pdo;
+}
+
+function renderDatabaseError(Throwable $e): void {
+    if (APP_DEBUG) {
+        die('Ошибка подключения или подготовки базы данных: ' . htmlspecialchars($e->getMessage()));
+    }
+    die('Ошибка подключения или подготовки базы данных');
 }
