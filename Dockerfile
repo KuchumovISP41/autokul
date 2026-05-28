@@ -1,6 +1,6 @@
 FROM php:8.2-fpm
 
-# Установка Nginx и необходимых расширений
+# Установка Nginx и расширений
 RUN apt-get update && apt-get install -y \
     nginx \
     git \
@@ -18,65 +18,43 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Копирование composer файлов
-COPY composer.json ./
-RUN if [ -f "composer.json" ]; then composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader; fi
-
-# Копирование всего проекта
+# Копирование файлов
 COPY . .
 
-# Создаем конфигурацию Nginx с правильными путями
+# Установка зависимостей Composer (если есть)
+RUN if [ -f "composer.json" ]; then \
+        composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader || true; \
+    fi
+
+# Создаем конфигурацию Nginx
 RUN echo 'server { \
-    listen 80 default_server; \
-    listen [::]:80 default_server; \
+    listen 80; \
+    server_name _; \
     root /var/www/html; \
     index index.php index.html; \
-    server_name _; \
     \
     location / { \
         try_files $uri $uri/ /index.php?$query_string; \
     } \
     \
     location ~ \.php$ { \
-        include fastcgi_params; \
         fastcgi_pass 127.0.0.1:9000; \
         fastcgi_index index.php; \
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \
-        fastcgi_param PATH_INFO $fastcgi_path_info; \
-    } \
-    \
-    location ~ /\.ht { \
-        deny all; \
+        include fastcgi_params; \
     } \
 }' > /etc/nginx/sites-enabled/default
 
-# Удаляем дефолтный конфиг
+# Удаляем дефолтный сайт Nginx
 RUN rm -f /etc/nginx/sites-enabled/default.conf 2>/dev/null || true
-
-# Создаем правильный скрипт запуска
-RUN echo '#!/bin/sh\n\
-set -e\n\
-\n\
-# Создаем необходимые директории\n\
-mkdir -p /var/run/php\n\
-chown -R www-data:www-data /var/run/php\n\
-\n\
-# Проверяем конфигурации\n\
-nginx -t\n\
-php-fpm -t\n\
-\n\
-# Запускаем PHP-FPM в фоне\n\
-php-fpm -D\n\
-\n\
-# Ждем запуска PHP-FPM\n\
-sleep 2\n\
-\n\
-# Запускаем Nginx в foreground\n\
-nginx -g "daemon off;"' > /start.sh && chmod +x /start.sh
 
 # Настройка прав
 RUN chown -R www-data:www-data /var/www/html
 
+# Создаем директорию для логов
+RUN mkdir -p /var/log/nginx && chown -R www-data:www-data /var/log/nginx
+
 EXPOSE 80
 
-CMD ["/start.sh"]
+# Запускаем PHP-FPM в фоне и Nginx в foreground
+CMD php-fpm -D && nginx -g "daemon off;"
