@@ -646,6 +646,7 @@ function buildUrl($params = []) {
                 <a href="/admin/categories.php">Категории</a>
                 <a href="/admin/reviews.php">Отзывы</a>
                 <a href="/admin/users.php">Клиенты</a>
+                <a href="/admin/payments.php">Платежи</a>
                 <hr class="sidebar-divider">
                 <a href="/index.php">На сайт</a>
                 <a href="/logout.php">Выйти</a>

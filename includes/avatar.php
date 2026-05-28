@@ -9,14 +9,7 @@
  * @return string URL аватара
  */
 function getAvatarUrl($avatar_path = null) {
-    if (!empty($avatar_path)) {
-        // Поддержка случаев, когда в сессии/БД уже лежит путь с ведущим "/"
-        $normalized = ltrim($avatar_path, '/');
-        if (file_exists(__DIR__ . '/../' . $normalized)) {
-            return '/' . $normalized;
-        }
-    }
-    return '/uploads/avatars/default.png';
+    return getStoredImageUrl($avatar_path, '/uploads/avatars/default.png', 300, 300, 'fill');
 }
 
 /**
@@ -170,6 +163,35 @@ function saveAvatar($file, $user_id, $pdo) {
         $stmt = $pdo->prepare("SELECT avatar FROM users WHERE id = :id");
         $stmt->execute(['id' => $user_id]);
         $old_avatar = $stmt->fetchColumn();
+
+        // На Railway файловая система эфемерная, поэтому при наличии Cloudinary
+        // сохраняем в БД public_id, а не локальный путь к файлу.
+        if (isCloudinaryConfigured()) {
+            $public_id = uploadImageToCloudinary($file['tmp_name'], 'avatars');
+            if (!$public_id) {
+                return [
+                    'success' => false,
+                    'message' => 'Не удалось загрузить аватар в Cloudinary.',
+                    'avatar_url' => null,
+                    'avatar_path' => null
+                ];
+            }
+
+            $stmt = $pdo->prepare("UPDATE users SET avatar = :avatar WHERE id = :id");
+            $stmt->execute([
+                'avatar' => $public_id,
+                'id' => $user_id
+            ]);
+
+            deleteStoredImage($old_avatar);
+
+            return [
+                'success' => true,
+                'message' => 'Аватар успешно обновлён.',
+                'avatar_url' => getAvatarUrl($public_id),
+                'avatar_path' => $public_id
+            ];
+        }
         
         // Создаём директорию, если её нет
         $upload_dir = __DIR__ . '/../uploads/avatars/';
@@ -309,12 +331,9 @@ function deleteAvatar($user_id, $pdo) {
         $stmt = $pdo->prepare("UPDATE users SET avatar = NULL WHERE id = :id");
         $stmt->execute(['id' => $user_id]);
         
-        // Удаляем файл
+        // Удаляем файл или Cloudinary-изображение
         if (!empty($current_avatar) && $current_avatar !== 'uploads/avatars/default.png') {
-            $filepath = __DIR__ . '/../' . $current_avatar;
-            if (file_exists($filepath)) {
-                @unlink($filepath);
-            }
+            deleteStoredImage($current_avatar);
         }
         
         return [

@@ -1,0 +1,17 @@
+Options -Indexes
+RewriteEngine On
+
+# Redirect to HTTPS only when the app is behind a proxy that sends X-Forwarded-Proto.
+# This avoids breaking local HTTP development.
+RewriteCond %{HTTP:X-Forwarded-Proto} !^$
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+<FilesMatch "^(\.env|composer\.(json|lock)|railway\.json|Dockerfile)$">
+    Require all denied
+</FilesMatch>
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]

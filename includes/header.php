@@ -485,6 +485,9 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
                 <a href="/contacts.php" class="header-nav-link <?php echo $current_page === 'contacts' ? 'active' : ''; ?>">
                     Контакты
                 </a>
+                <a href="/payments.php" class="header-nav-link <?php echo $current_page === 'payments' ? 'active' : ''; ?>">
+                    Оплата
+                </a>
 
                 <div class="mobile-auth-links">
                     <?php if (isLoggedIn()): ?>
@@ -502,17 +505,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
             <!-- Правая часть -->
             <div class="header-right">
-                
-                <!-- Телефон -->
-                <a href="tel:+79001234567" class="header-phone">
-                    <span class="header-phone-icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.36 11.36 0 003.58.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.36 11.36 0 00.57 3.58 1 1 0 01-.25 1.01l-2.2 2.2z"/>
-                        </svg>
-                    </span>
-                    +7 (900) 123-45-67
-                </a>
-                
                 <!-- Авторизация -->
                 <div class="header-auth">
                     <?php if (isLoggedIn()): ?>

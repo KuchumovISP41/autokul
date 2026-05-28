@@ -90,7 +90,7 @@ require_once 'includes/header.php';
             <?php foreach ($services as $service): ?>
             <div class="service-card">
                 <div class="service-preview-image">
-                    <img src="<?php echo !empty($service['image']) && file_exists(__DIR__ . '/' . $service['image']) ? '/' . htmlspecialchars($service['image']) : '/uploads/avatars/default-service.png'; ?>"
+                    <img src="<?php echo htmlspecialchars(getStoredImageUrl($service['image'] ?? null, '/uploads/avatars/default-service.png', 400, 300, 'fill')); ?>"
                          alt="<?php echo htmlspecialchars($service['name']); ?>"
                          loading="lazy">
                 </div>
@@ -141,6 +141,7 @@ require_once 'includes/header.php';
         </div>
     </div>
 </section>
+
 
 <?php
 // Подключаем подвал
