@@ -22,9 +22,16 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --opt
 COPY . .
 COPY docker/railway-entrypoint.sh /usr/local/bin/railway-entrypoint
 
-RUN a2enmod rewrite headers \
-    && chown -R www-data:www-data /var/www/html \
-    && chmod +x /usr/local/bin/railway-entrypoint
+# === ИСПРАВЛЕНИЕ ОШИБКИ ===
+# Отключаем mpm_event и включаем mpm_prefork
+RUN a2dismod mpm_event || true && \
+    a2enmod mpm_prefork && \
+    a2enmod rewrite headers && \
+    chown -R www-data:www-data /var/www/html && \
+    chmod +x /usr/local/bin/railway-entrypoint
+
+# Проверка конфигурации Apache
+RUN apachectl -t
 
 EXPOSE 80
 
