@@ -77,6 +77,10 @@ function validateServiceImage($file) {
  * Сохранение изображения услуги
  */
 function saveServiceImage($file) {
+    if (isCloudinaryConfigured()) {
+        return uploadImageToCloudinary($file['tmp_name'], 'services');
+    }
+
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime_type = finfo_file($finfo, $file['tmp_name']);
     finfo_close($finfo);
@@ -202,6 +206,7 @@ if (isset($_GET['edit']) && isset($_GET['ajax']) && $_GET['ajax'] == '1') {
     $stmt->execute(['id' => $edit_id]);
     $service = $stmt->fetch();
     if ($service) {
+        $service['image_url'] = getStoredImageUrl($service['image'] ?? null, '/uploads/avatars/default-service.png', 800, 600, 'fill');
         echo json_encode($service, JSON_UNESCAPED_UNICODE);
     } else {
         http_response_code(404);
@@ -290,9 +295,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         'id' => $service_id
                     ]);
                     
-                    if (!empty($old_image) && file_exists(__DIR__ . '/../' . $old_image)) {
-                        @unlink(__DIR__ . '/../' . $old_image);
-                    }
+                    deleteStoredImage($old_image);
                 } else {
                     $stmt = $pdo->prepare("
                         UPDATE services 
@@ -354,9 +357,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $stmt = $pdo->prepare("DELETE FROM services WHERE id = :id");
             $stmt->execute(['id' => $service_id]);
             
-            if (!empty($old_image) && file_exists(__DIR__ . '/../' . $old_image)) {
-                @unlink(__DIR__ . '/../' . $old_image);
-            }
+            deleteStoredImage($old_image);
             
             $message = 'Услуга успешно удалена.';
             $message_type = 'success';
@@ -959,7 +960,7 @@ $services = $stmt->fetchAll();
                                 <span class="service-category-badge"><?php echo htmlspecialchars($svc['category_name']); ?></span>
                             </div>
                             <div class="service-thumb">
-                                <img src="<?php echo (!empty($svc['image']) && file_exists(__DIR__ . '/../' . $svc['image'])) ? '/' . htmlspecialchars($svc['image']) : '/uploads/avatars/default-service.png'; ?>"
+                                <img src="<?php echo htmlspecialchars(getStoredImageUrl($svc['image'] ?? null, '/uploads/avatars/default-service.png', 800, 600, 'fill')); ?>"
                                      alt="<?php echo htmlspecialchars($svc['name']); ?>"
                                      loading="lazy">
                             </div>
@@ -1104,8 +1105,8 @@ $services = $stmt->fetchAll();
                     document.getElementById('serviceDuration').value = data.duration;
                     
                     var preview = document.getElementById('serviceImagePreview');
-                    if (data.image) {
-                        preview.src = '/' + data.image;
+                    if (data.image_url) {
+                        preview.src = data.image_url;
                     } else {
                         preview.src = '/uploads/avatars/default-service.png';
                     }

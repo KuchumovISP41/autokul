@@ -225,9 +225,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Автомобили пользователя
 $cars = [];
 if ($active_tab === 'cars' || $active_tab === 'profile') {
-    $cars = $pdo->prepare("SELECT * FROM cars WHERE user_id = :uid ORDER BY id DESC")->execute(['uid' => $user['id']]) 
-             ? $pdo->prepare("SELECT * FROM cars WHERE user_id = :uid ORDER BY id DESC")->fetchAll() : [];
-    // Исправим: выполним запрос правильно
     $stmt = $pdo->prepare("SELECT * FROM cars WHERE user_id = :uid ORDER BY id DESC");
     $stmt->execute(['uid' => $user['id']]);
     $cars = $stmt->fetchAll();
