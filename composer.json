@@ -1,22 +1,15 @@
 {
-<<<<<<< HEAD
     "name": "autokul/sto",
     "description": "Auto service website",
     "type": "project",
     "require": {
-        "vlucas/phpdotenv": "^5.5",
-        "cloudinary/cloudinary_php": "^2.0"
-    }
-=======
-  "require": {
-    "php": ">=8.1",
-    "cloudinary/cloudinary_php": "^2.14",
-    "vlucas/phpdotenv": "^5.6"
-  },
-  "config": {
-    "optimize-autoloader": true,
-    "sort-packages": true
-  },
-  "license": "proprietary"
->>>>>>> 92fe270bd282cf3babf5a26189e869f3e03a2764
+        "php": ">=8.1",
+        "vlucas/phpdotenv": "^5.6",
+        "cloudinary/cloudinary_php": "^2.14"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "license": "proprietary"
 }
