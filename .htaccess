@@ -1,0 +1,15 @@
+Options -Indexes
+RewriteEngine On
+
+# Redirect to HTTPS on Railway/proxies without causing a redirect loop locally.
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{HTTPS} !=on
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+<FilesMatch "^(\.env|composer\.(json|lock)|railway\.json|Dockerfile)$">
+    Require all denied
+</FilesMatch>
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]

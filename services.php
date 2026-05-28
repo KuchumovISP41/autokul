@@ -63,10 +63,7 @@ switch ($sort_by) {
 
 // Функция получения URL изображения
 function getServiceImage($image_path) {
-    if (!empty($image_path) && file_exists(__DIR__ . '/' . $image_path)) {
-        return '/' . $image_path;
-    }
-    return '/uploads/avatars/default-service.png';
+    return getStoredImageUrl($image_path, '/uploads/avatars/default-service.png', 800, 600, 'fill');
 }
 
 require_once 'includes/header.php';

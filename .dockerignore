@@ -1,0 +1,10 @@
+.git
+.vs
+.env
+.env.*
+!.env.example
+node_modules
+vendor
+*.log
+uploads/temp
+uploads/tmp
