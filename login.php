@@ -23,10 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $remember = isset($_POST['remember']) ? true : false;
     
     // Валидация email
-    if (empty($email)) {
-        $errors['email'] = 'Введите email';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors['email'] = 'Введите корректный email';
+    if ($error = validateEmailValue($email)) {
+        $errors['email'] = $error;
     }
     
     // Валидация пароля

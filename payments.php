@@ -16,6 +16,13 @@ $user = $userStmt->fetch() ?: ['full_name' => $_SESSION['user_name'] ?? 'Кли�
 $statuses = getPaymentStatuses();
 $methods = getPaymentMethods();
 $documentTypes = getDocumentTypes();
+$paymentErrors = [];
+$paymentForm = [
+    'amount' => '',
+    'payment_method' => 'card',
+    'document_type' => 'receipt',
+];
+
 $statusClasses = [
     'pending' => 'pay-status-pending',
     'paid' => 'pay-status-paid',
@@ -24,18 +31,29 @@ $statusClasses = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_payment'])) {
+    $paymentForm['amount'] = trim($_POST['amount'] ?? '');
     $method = $_POST['payment_method'] ?? 'card';
+    $paymentForm['payment_method'] = $method;
     if (!array_key_exists($method, $methods)) {
         $method = 'card';
+        $paymentForm['payment_method'] = 'card';
     }
 
     $documentType = $_POST['document_type'] ?? 'receipt';
+    $paymentForm['document_type'] = $documentType;
     if (!array_key_exists($documentType, $documentTypes)) {
         $documentType = 'receipt';
+        $paymentForm['document_type'] = 'receipt';
     }
 
-    $amount = max(0, (float)($_POST['amount'] ?? 0));
-    if ($amount > 0) {
+    $amount = (float)str_replace(',', '.', $paymentForm['amount']);
+    if ($amount <= 0) {
+        $paymentErrors['amount'] = 'Сумма оплаты должна быть больше 0 рублей';
+    } elseif ($amount > 1000000) {
+        $paymentErrors['amount'] = 'Сумма оплаты не должна превышать 1 000 000 рублей';
+    }
+
+    if (empty($paymentErrors)) {
         $invoice = 'INV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
         $stmt = $pdo->prepare('INSERT INTO payments (user_id, amount, payment_method, status, invoice_number, document_type) VALUES (:uid, :amount, :method, :status, :invoice, :document_type)');
         $stmt->execute([
@@ -52,13 +70,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_payment'])) {
         sendPaymentEmail(
             $user['email'],
             'Автокул СТО: создан платёж',
-            "Здравствуйте, {$user['full_name']}!\nДокумент {$invoice} на сумму {$formattedAmount} ₽ создан.\nСпособ оплаты: {$methods[$method]}.\nТекущий статус: Ожидает оплаты."
+            "Здравствуйте, {$user['full_name']}!
+Документ {$invoice} на сумму {$formattedAmount} ₽ создан.
+Способ оплаты: {$methods[$method]}.
+Текущий статус: Ожидает оплаты."
         );
-    }
 
-    header('Location: /payments.php');
-    exit;
+        header('Location: /payments.php');
+        exit;
+    }
 }
+
 
 if (isset($_GET['download']) && ctype_digit($_GET['download'])) {
     $pid = (int)$_GET['download'];
@@ -133,22 +155,25 @@ require_once 'includes/header.php';
             <h2>Создать платёж</h2>
             <div>
                 <label for="amount">Сумма к оплате</label>
-                <input id="amount" type="number" name="amount" min="1" step="1" placeholder="Например, 3500" required>
+                <input id="amount" type="number" name="amount" min="1" max="1000000" step="1" value="<?php echo htmlspecialchars($paymentForm['amount']); ?>" placeholder="Например, 3500" required>
+                <?php if (isset($paymentErrors['amount'])): ?>
+                    <small style="color:#b71c1c;"><?php echo htmlspecialchars($paymentErrors['amount']); ?></small>
+                <?php endif; ?>
             </div>
             <div>
                 <label for="document_type">Документ</label>
                 <select id="document_type" name="document_type">
                     <?php foreach ($documentTypes as $key => $label): ?>
-                        <option value="<?php echo htmlspecialchars($key); ?>"><?php echo htmlspecialchars($label); ?></option>
+                        <option value="<?php echo htmlspecialchars($key); ?>" <?php echo $paymentForm['document_type'] === $key ? 'selected' : ''; ?>><?php echo htmlspecialchars($label); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
             <div>
                 <label>Способ оплаты</label>
                 <div class="payment-methods">
-                    <label class="payment-method"><input type="radio" name="payment_method" value="card" checked><span><strong>Банковская карта</strong><span>Visa, Mastercard, МИР</span></span></label>
-                    <label class="payment-method"><input type="radio" name="payment_method" value="yoomoney"><span><strong>Электронные деньги</strong><span>ЮMoney и похожие кошельки</span></span></label>
-                    <label class="payment-method"><input type="radio" name="payment_method" value="invoice"><span><strong>Оплата по счёту</strong><span>Для организаций и безналичной оплаты</span></span></label>
+                    <label class="payment-method"><input type="radio" name="payment_method" value="card" <?php echo $paymentForm['payment_method'] === 'card' ? 'checked' : ''; ?>><span><strong>Банковская карта</strong><span>Visa, Mastercard, МИР</span></span></label>
+                    <label class="payment-method"><input type="radio" name="payment_method" value="yoomoney" <?php echo $paymentForm['payment_method'] === 'yoomoney' ? 'checked' : ''; ?>><span><strong>Электронные деньги</strong><span>ЮMoney и похожие кошельки</span></span></label>
+                    <label class="payment-method"><input type="radio" name="payment_method" value="invoice" <?php echo $paymentForm['payment_method'] === 'invoice' ? 'checked' : ''; ?>><span><strong>Оплата по счёту</strong><span>Для организаций и безналичной оплаты</span></span></label>
                 </div>
             </div>
             <button class="btn btn-primary" type="submit">Создать платёж</button>

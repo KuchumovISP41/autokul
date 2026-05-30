@@ -60,32 +60,34 @@ $form_data = [
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'send_contact') {
     
-    $form_data['name'] = trim($_POST['name'] ?? '');
+    $form_data['name'] = normalizeSpaces($_POST['name'] ?? '');
     $form_data['email'] = trim($_POST['email'] ?? '');
-    $form_data['phone'] = trim($_POST['phone'] ?? '');
+    $form_data['phone'] = formatPhoneMask($_POST['phone'] ?? '');
     $form_data['message'] = trim($_POST['message'] ?? '');
     
     // Валидация
     $errors = [];
     
-    if (empty($form_data['name'])) {
-        $errors[] = 'Укажите ваше имя';
-    } elseif (mb_strlen($form_data['name']) < 2) {
-        $errors[] = 'Имя должно содержать минимум 2 символа';
+    if ($error = validateHumanName($form_data['name'], 'Имя', 2, 80)) {
+        $errors[] = $error;
     }
     
     if (empty($form_data['email']) && empty($form_data['phone'])) {
         $errors[] = 'Укажите email или телефон для связи';
     }
     
-    if (!empty($form_data['email']) && !filter_var($form_data['email'], FILTER_VALIDATE_EMAIL)) {
-        $errors[] = 'Введите корректный email';
+    if ($error = validateEmailValue($form_data['email'], false)) {
+        $errors[] = $error;
+    }
+
+    if ($error = validatePhone($form_data['phone'], false)) {
+        $errors[] = $error;
     }
     
     if (empty($form_data['message'])) {
         $errors[] = 'Напишите ваше сообщение';
-    } elseif (mb_strlen($form_data['message']) < 10) {
-        $errors[] = 'Сообщение должно содержать минимум 10 символов';
+    } elseif ($error = validatePlainText($form_data['message'], 'Сообщение', 10, 1000)) {
+        $errors[] = $error;
     }
     
     // Простая защита от спама (скрытое поле)
@@ -677,7 +679,7 @@ require_once 'includes/header.php';
                     <label for="phone">Телефон</label>
                     <input type="tel" id="phone" name="phone" 
                            value="<?php echo htmlspecialchars($form_data['phone']); ?>"
-                           placeholder="+7 (900) 123-45-67">
+                           placeholder="+7 (900) 123-45-67" maxlength="18" data-phone-mask>
                 </div>
             </div>
 

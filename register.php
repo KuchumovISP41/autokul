@@ -20,30 +20,22 @@ $form_data = [
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Получаем и очищаем данные
-    $form_data['full_name'] = trim($_POST['full_name'] ?? '');
+    $form_data['full_name'] = normalizeSpaces($_POST['full_name'] ?? '');
     $form_data['email'] = trim($_POST['email'] ?? '');
-    $form_data['phone'] = trim($_POST['phone'] ?? '');
+    $form_data['phone'] = formatPhoneMask($_POST['phone'] ?? '');
     $password = $_POST['password'] ?? '';
     $password_confirm = $_POST['password_confirm'] ?? '';
     
     // ========== ВАЛИДАЦИЯ НА СЕРВЕРЕ ==========
     
     // Проверка имени
-    if (empty($form_data['full_name'])) {
-        $errors['full_name'] = 'Введите ваше полное имя';
-    } elseif (mb_strlen($form_data['full_name']) < 3) {
-        $errors['full_name'] = 'Имя должно содержать минимум 3 символа';
-    } elseif (mb_strlen($form_data['full_name']) > 150) {
-        $errors['full_name'] = 'Имя не должно превышать 150 символов';
+    if ($error = validateHumanName($form_data['full_name'], 'Полное имя', 3, 150)) {
+        $errors['full_name'] = $error;
     }
     
     // Проверка email
-    if (empty($form_data['email'])) {
-        $errors['email'] = 'Введите адрес электронной почты';
-    } elseif (!filter_var($form_data['email'], FILTER_VALIDATE_EMAIL)) {
-        $errors['email'] = 'Введите корректный email (например: user@example.com)';
-    } elseif (strlen($form_data['email']) > 100) {
-        $errors['email'] = 'Email не должен превышать 100 символов';
+    if ($error = validateEmailValue($form_data['email'])) {
+        $errors['email'] = $error;
     } else {
         // Проверяем, нет ли уже такого email в БД
         $pdo = getDBConnection();
@@ -55,23 +47,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Проверка телефона (опционально)
-    if (!empty($form_data['phone'])) {
-        // Убираем всё, кроме цифр и +
-        $phone_clean = preg_replace('/[^\d+]/', '', $form_data['phone']);
-        if (strlen($phone_clean) < 10 || strlen($phone_clean) > 15) {
-            $errors['phone'] = 'Введите корректный номер телефона (10-15 цифр)';
-        }
-        $form_data['phone'] = $phone_clean; // Сохраняем очищенный
+    if ($error = validatePhone($form_data['phone'], false)) {
+        $errors['phone'] = $error;
     }
     
     // Проверка пароля
-    if (empty($password)) {
-        $errors['password'] = 'Придумайте пароль';
-    } elseif (strlen($password) < 6) {
-        $errors['password'] = 'Пароль должен содержать минимум 6 символов';
-    } elseif (strlen($password) > 72) {
-        // bcrypt обрезает пароли длиннее 72 символов
-        $errors['password'] = 'Пароль не должен превышать 72 символа';
+    if ($error = validatePasswordRules($password, true)) {
+        $errors['password'] = $error;
     }
     
     // Проверка подтверждения пароля
@@ -199,7 +181,7 @@ require_once 'includes/header.php';
                         id="phone" 
                         name="phone" 
                         value="<?php echo htmlspecialchars($form_data['phone']); ?>"
-                        placeholder="+7 (900) 123-45-67"
+                        placeholder="+7 (900) 123-45-67" maxlength="18" data-phone-mask
                         style="width: 100%; padding: 12px 14px; border: 1px solid <?php echo isset($errors['phone']) ? '#d9534f' : 'var(--gray-300)'; ?>; border-radius: 8px; font-size: 15px; transition: var(--transition); outline: none;"
                         onfocus="this.style.borderColor='var(--primary)'"
                         onblur="this.style.borderColor='<?php echo isset($errors['phone']) ? '#d9534f' : 'var(--gray-300)'; ?>'"
@@ -219,8 +201,8 @@ require_once 'includes/header.php';
                             type="password" 
                             id="password" 
                             name="password" 
-                            placeholder="Минимум 6 символов"
-                            minlength="6"
+                            placeholder="Пароль с цифрой и заглавной буквой"
+                            minlength="4"
                             maxlength="72"
                             required
                             style="width: 100%; padding: 12px 50px 12px 14px; border: 1px solid <?php echo isset($errors['password']) ? '#d9534f' : 'var(--gray-300)'; ?>; border-radius: 8px; font-size: 15px; transition: var(--transition); outline: none;"
@@ -247,7 +229,7 @@ require_once 'includes/header.php';
                             id="password_confirm" 
                             name="password_confirm" 
                             placeholder="Повторите пароль"
-                            minlength="6"
+                            minlength="4"
                             maxlength="72"
                             required
                             style="width: 100%; padding: 12px 50px 12px 14px; border: 1px solid <?php echo isset($errors['password_confirm']) ? '#d9534f' : 'var(--gray-300)'; ?>; border-radius: 8px; font-size: 15px; transition: var(--transition); outline: none;"
