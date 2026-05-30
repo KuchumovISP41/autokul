@@ -63,8 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $car_id_raw = $_POST['car_id'] ?? '';
     $car_id = intval($car_id_raw);
     
-    $new_car_brand = trim($_POST['new_car_brand'] ?? '');
-    $new_car_model = trim($_POST['new_car_model'] ?? '');
+    $new_car_brand = normalizeSpaces($_POST['new_car_brand'] ?? '');
+    $new_car_model = normalizeSpaces($_POST['new_car_model'] ?? '');
     $new_car_year = intval($_POST['new_car_year'] ?? 0);
     $new_car_plate = trim($_POST['new_car_plate'] ?? '');
     $new_car_vin = trim($_POST['new_car_vin'] ?? '');
@@ -81,8 +81,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     // Проверяем по сырому значению (строка 'new' или число)
     if ($car_id_raw === 'new') {
         // Добавление нового автомобиля
-        if (empty($new_car_brand) || empty($new_car_model)) {
-            $form_errors['car'] = 'Укажите марку и модель автомобиля';
+        if ($error = validateCarText($new_car_brand, 'Марка автомобиля', true, 100)) {
+            $form_errors['car'] = $error;
+        } elseif ($error = validateCarText($new_car_model, 'Модель автомобиля', true, 100)) {
+            $form_errors['car'] = $error;
+        } elseif ($new_car_year && ($new_car_year < 1950 || $new_car_year > (int)date('Y'))) {
+            $form_errors['car'] = 'Год выпуска должен быть в диапазоне от 1950 до текущего года';
+        } elseif ($new_car_vin !== '' && !preg_match('/^[A-HJ-NPR-Z0-9]{17}$/i', $new_car_vin)) {
+            $form_errors['car'] = 'VIN должен содержать 17 латинских букв и цифр без I, O, Q';
+        } elseif ($new_car_plate !== '' && !preg_match('/^[А-ЯA-Z0-9-]{5,10}$/u', $new_car_plate)) {
+            $form_errors['car'] = 'Госномер может содержать только буквы, цифры и дефис, до 10 символов';
         } else {
             try {
                 $stmt = $pdo->prepare("INSERT INTO cars (user_id, brand, model, year, license_plate, vin) 
@@ -130,14 +138,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         }
     }
     
-    if (empty($appointment_date)) {
-        $form_errors['date'] = 'Выберите дату визита';
-    } elseif (strtotime($appointment_date) < strtotime(date('Y-m-d'))) {
-        $form_errors['date'] = 'Нельзя записаться на прошедшую дату';
+    if ($error = validateFutureDate($appointment_date, 2)) {
+        $form_errors['date'] = $error;
     }
     
     if (empty($appointment_time)) {
         $form_errors['time'] = 'Выберите время визита';
+    } elseif (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/', $appointment_time)) {
+        $form_errors['time'] = 'Выберите корректное время визита';
+    }
+
+    if ($notes !== '' && ($error = validatePlainText($notes, 'Комментарий', 0, 1000))) {
+        $form_errors['notes'] = $error;
     }
     
     if (empty($form_errors) && $final_car_id && !empty($valid_services)) {
@@ -713,7 +725,7 @@ require_once 'includes/header.php';
             <?php endif; ?>
 
             <div class="search-box">
-                <input type="text" id="serviceSearch" placeholder="Поиск услуги по названию...">
+                <input type="text" id="serviceSearch" maxlength="100" pattern="[\p{L}\p{N}\- ]{0,100}" placeholder="Поиск услуги по названию...">
             </div>
 
             <div id="categoriesContainer">
@@ -738,7 +750,7 @@ require_once 'includes/header.php';
                                                data-duration="<?php echo $svc['duration']; ?>" 
                                                data-price="<?php echo $svc['price']; ?>"
                                                data-category="<?php echo $cat_id; ?>"
-                                               onchange="onServiceChange(this)">
+                                               onchange="onServiceChange(this)" <?php echo in_array((string)$svc['id'], array_map('strval', $service_ids ?? []), true) ? 'checked' : ''; ?>>
                                         <span class="service-checkbox-custom">✓</span>
                                         <div class="service-item-info">
                                             <div class="svc-name"><?php echo htmlspecialchars($svc['name']); ?></div>
@@ -788,7 +800,7 @@ require_once 'includes/header.php';
                     <?php foreach ($cars as $car): ?>
                         <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 2px solid var(--gray-200); border-radius: 10px; cursor: pointer;">
                             <input type="radio" name="car_id" value="<?php echo $car['id']; ?>" 
-                                   <?php echo count($cars) === 1 ? 'checked' : ''; ?>
+                                   <?php echo ((string)($car_id_raw ?? '') === (string)$car['id'] || (empty($car_id_raw ?? '') && count($cars) === 1)) ? 'checked' : ''; ?>
                                    onchange="document.getElementById('newCarFields').style.display='none'">
                             <div>
                                 <strong><?php echo htmlspecialchars($car['brand'] . ' ' . $car['model']); ?></strong>
@@ -808,7 +820,7 @@ require_once 'includes/header.php';
             <?php endif; ?>
 
             <label style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 2px dashed var(--gray-300); border-radius: 10px; cursor: pointer;">
-                <input type="radio" name="car_id" value="new" onchange="document.getElementById('newCarFields').style.display='block'"
+                <input type="radio" name="car_id" value="new" <?php echo (($car_id_raw ?? '') === 'new') ? 'checked' : ''; ?> onchange="document.getElementById('newCarFields').style.display='block'"
                        <?php echo empty($cars) ? 'checked' : ''; ?>>
                 <strong>Добавить новый автомобиль</strong>
             </label>
@@ -817,24 +829,24 @@ require_once 'includes/header.php';
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div>
                         <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">Марка *</label>
-                        <input type="text" name="new_car_brand" placeholder="Toyota" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
+                        <input type="text" name="new_car_brand" value="<?php echo htmlspecialchars($new_car_brand ?? ''); ?>" placeholder="Toyota" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
                     </div>
                     <div>
                         <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">Модель *</label>
-                        <input type="text" name="new_car_model" placeholder="Camry" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
+                        <input type="text" name="new_car_model" value="<?php echo htmlspecialchars($new_car_model ?? ''); ?>" placeholder="Camry" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
                     </div>
                     <div>
                         <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">Год</label>
-                        <input type="number" name="new_car_year" placeholder="2020" min="1950" max="<?php echo date('Y'); ?>" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
+                        <input type="number" name="new_car_year" value="<?php echo htmlspecialchars((string)($new_car_year ?? '')); ?>" placeholder="2020" min="1950" max="<?php echo date('Y'); ?>" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
                     </div>
                     <div>
                         <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">Госномер</label>
-                        <input type="text" name="new_car_plate" placeholder="A123BB177" maxlength="10" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
+                        <input type="text" name="new_car_plate" value="<?php echo htmlspecialchars($new_car_plate ?? ''); ?>" placeholder="A123BB177" maxlength="10" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
                     </div>
                 </div>
                 <div style="margin-top: 12px;">
                     <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px;">VIN</label>
-                    <input type="text" name="new_car_vin" placeholder="17 символов" maxlength="17" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
+                    <input type="text" name="new_car_vin" value="<?php echo htmlspecialchars($new_car_vin ?? ''); ?>" placeholder="17 символов" maxlength="17" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 8px;">
                 </div>
             </div>
         </div>
@@ -846,14 +858,15 @@ require_once 'includes/header.php';
             <div style="margin-bottom: 16px;">
                 <label style="font-weight: 600; display: block; margin-bottom: 6px;">Дата визита</label>
                 <input type="date" name="appointment_date" id="appointmentDate" 
-                       min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>"
-                       max="<?php echo date('Y-m-d', strtotime('+30 days')); ?>"
+                       value="<?php echo htmlspecialchars($appointment_date ?? ''); ?>"
+                       min="<?php echo date('Y-m-d'); ?>"
+                       max="<?php echo date('Y-m-d', strtotime('+2 years')); ?>"
                        onchange="loadTimeSlots()"
                        style="width: 100%; padding: 12px; border: 1px solid var(--gray-300); border-radius: 10px; font-size: 15px;">
                 <?php if (isset($form_errors['date'])): ?>
                     <p style="color: #dc3545; font-size: 13px; margin-top: 4px;"><?php echo $form_errors['date']; ?></p>
                 <?php endif; ?>
-                <small style="color: var(--gray-500);">Запись доступна ежедневно в течение 30 дней</small>
+                <small style="color: var(--gray-500);">Запись доступна с сегодняшнего дня и не позднее чем через 2 года</small>
             </div>
 
             <div id="timeSlotsContainer" style="display: none;">
@@ -873,7 +886,10 @@ require_once 'includes/header.php';
         <div class="step-card">
             <h2><span class="step-title-text">4. Примечания к записи</span></h2>
             <textarea name="notes" rows="3" placeholder="Опишите проблему или особые пожелания (необязательно)..." 
-                      style="width: 100%; padding: 12px 14px; border: 1px solid var(--gray-300); border-radius: 10px; font-family: inherit; font-size: 14px; resize: vertical;"></textarea>
+                      style="width: 100%; padding: 12px 14px; border: 1px solid var(--gray-300); border-radius: 10px; font-family: inherit; font-size: 14px; resize: vertical;"><?php echo htmlspecialchars($notes ?? ''); ?></textarea>
+            <?php if (isset($form_errors['notes'])): ?>
+                <p style="color: #dc3545; font-size: 13px; margin-top: 4px;"><?php echo $form_errors['notes']; ?></p>
+            <?php endif; ?>
         </div>
 
         <button type="submit" class="submit-btn">Подтвердить запись</button>

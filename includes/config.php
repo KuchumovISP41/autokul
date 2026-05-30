@@ -10,6 +10,8 @@ if (class_exists(\Dotenv\Dotenv::class) && file_exists(__DIR__ . '/../.env')) {
     \Dotenv\Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();
 }
 
+require_once __DIR__ . '/validation.php';
+
 /**
  * Read an environment value from $_ENV, $_SERVER or getenv().
  */

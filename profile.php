@@ -32,6 +32,13 @@ if (!in_array($active_tab, $allowed_tabs)) {
 // ========== ОБРАБОТКА ФОРМ ==========
 $success_message = '';
 $error_message = '';
+$car_form = [
+    'brand' => '',
+    'model' => '',
+    'year' => '',
+    'vin' => '',
+    'license_plate' => '',
+];
 
 // --- Загрузка аватара ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_avatar') {
@@ -63,14 +70,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // --- Сохранение профиля ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_profile') {
     
-    $full_name = trim($_POST['full_name'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
+    $full_name = normalizeSpaces($_POST['full_name'] ?? '');
+    $phone = formatPhoneMask($_POST['phone'] ?? '');
     $current_password = $_POST['current_password'] ?? '';
     $new_password = $_POST['new_password'] ?? '';
     
-    // Валидация имени
-    if (empty($full_name) || mb_strlen($full_name) < 3) {
-        $error_message = 'Имя должно содержать минимум 3 символа';
+    // Валидация имени и телефона
+    if ($error = validateHumanName($full_name, 'Полное имя', 3, 150)) {
+        $error_message = $error;
+    } elseif ($error = validatePhone($phone, false)) {
+        $error_message = $error;
     } else {
         try {
             // Обновляем основные данные
@@ -90,13 +99,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if (!empty($current_password) && !empty($new_password)) {
                 // Проверяем текущий пароль
                 if (password_verify($current_password, $user['password'])) {
-                    if (strlen($new_password) >= 6) {
+                    $password_error = validatePasswordRules($new_password, true);
+                    if ($password_error === null) {
                         $new_hash = password_hash($new_password, PASSWORD_BCRYPT, ['cost' => 10]);
                         $stmt = $pdo->prepare("UPDATE users SET password = :pass WHERE id = :id");
                         $stmt->execute(['pass' => $new_hash, 'id' => $user['id']]);
                         $success_message = 'Профиль и пароль успешно обновлены!';
                     } else {
-                        $error_message = 'Новый пароль должен содержать минимум 6 символов';
+                        $error_message = $password_error;
                     }
                 } else {
                     $error_message = 'Текущий пароль указан неверно. Профиль обновлён без смены пароля.';
@@ -120,14 +130,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // --- Добавление автомобиля ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_car') {
     
-    $brand = trim($_POST['brand'] ?? '');
-    $model = trim($_POST['model'] ?? '');
-    $year = intval($_POST['year'] ?? 0);
-    $vin = trim($_POST['vin'] ?? '');
-    $license_plate = trim($_POST['license_plate'] ?? '');
+    $car_form = [
+        'brand' => normalizeSpaces($_POST['brand'] ?? ''),
+        'model' => normalizeSpaces($_POST['model'] ?? ''),
+        'year' => trim($_POST['year'] ?? ''),
+        'vin' => strtoupper(trim($_POST['vin'] ?? '')),
+        'license_plate' => strtoupper(trim($_POST['license_plate'] ?? '')),
+    ];
+    $brand = $car_form['brand'];
+    $model = $car_form['model'];
+    $year = intval($car_form['year']);
+    $vin = $car_form['vin'];
+    $license_plate = $car_form['license_plate'];
     
-    if (empty($brand) || empty($model)) {
-        $error_message = 'Марка и модель автомобиля обязательны';
+    if ($error = validateCarText($brand, 'Марка автомобиля', true, 100)) {
+        $error_message = $error;
+    } elseif ($error = validateCarText($model, 'Модель автомобиля', true, 100)) {
+        $error_message = $error;
+    } elseif ($year && ($year < 1950 || $year > (int)date('Y'))) {
+        $error_message = 'Год выпуска должен быть в диапазоне от 1950 до текущего года';
+    } elseif ($vin !== '' && !preg_match('/^[A-HJ-NPR-Z0-9]{17}$/i', $vin)) {
+        $error_message = 'VIN должен содержать 17 латинских букв и цифр без I, O, Q';
+    } elseif ($license_plate !== '' && !preg_match('/^[А-ЯA-Z0-9-]{5,10}$/u', $license_plate)) {
+        $error_message = 'Госномер может содержать только буквы, цифры и дефис, до 10 символов';
     } else {
         try {
             $stmt = $pdo->prepare("INSERT INTO cars (user_id, brand, model, year, vin, license_plate) 
@@ -141,6 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 'plate' => $license_plate ?: null
             ]);
             $success_message = 'Автомобиль успешно добавлен!';
+            $car_form = ['brand' => '', 'model' => '', 'year' => '', 'vin' => '', 'license_plate' => ''];
         } catch (PDOException $e) {
             $error_message = 'Ошибка при добавлении автомобиля.';
             error_log('Ошибка добавления авто: ' . $e->getMessage());
@@ -825,7 +851,7 @@ require_once 'includes/header.php';
                 
                 <div class="form-group">
                     <label>Телефон</label>
-                    <input type="tel" name="phone" value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>" placeholder="+7 (900) 123-45-67">
+                    <input type="tel" name="phone" value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>" placeholder="+7 (900) 123-45-67" maxlength="18" data-phone-mask>
                 </div>
                 
                 <hr style="border: none; border-top: 1px solid var(--gray-200); margin: 24px 0;">
@@ -840,7 +866,7 @@ require_once 'includes/header.php';
                 
                 <div class="form-group">
                     <label>Новый пароль</label>
-                    <input type="password" name="new_password" placeholder="Минимум 6 символов" minlength="6">
+                    <input type="password" name="new_password" placeholder="Пароль с цифрой и заглавной буквой" minlength="4">
                 </div>
                 
                 <button type="submit" class="btn btn-primary" style="margin-top: 8px;">Сохранить изменения</button>
@@ -898,28 +924,28 @@ require_once 'includes/header.php';
                 <div class="form-row">
                     <div class="form-group">
                         <label>Марка <span style="color: var(--primary);">*</span></label>
-                        <input type="text" name="brand" placeholder="Например: Toyota" required>
+                        <input type="text" name="brand" value="<?php echo htmlspecialchars($car_form['brand']); ?>" placeholder="Например: Toyota" required>
                     </div>
                     <div class="form-group">
                         <label>Модель <span style="color: var(--primary);">*</span></label>
-                        <input type="text" name="model" placeholder="Например: Camry" required>
+                        <input type="text" name="model" value="<?php echo htmlspecialchars($car_form['model']); ?>" placeholder="Например: Camry" required>
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Год выпуска</label>
-                        <input type="number" name="year" placeholder="2020" min="1950" max="<?php echo date('Y'); ?>">
+                        <input type="number" name="year" value="<?php echo htmlspecialchars($car_form['year']); ?>" placeholder="2020" min="1950" max="<?php echo date('Y'); ?>">
                     </div>
                     <div class="form-group">
                         <label>Госномер</label>
-                        <input type="text" name="license_plate" placeholder="А123БВ177" maxlength="10">
+                        <input type="text" name="license_plate" value="<?php echo htmlspecialchars($car_form['license_plate']); ?>" placeholder="А123БВ177" maxlength="10">
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label>VIN-номер</label>
-                    <input type="text" name="vin" placeholder="17 символов" maxlength="17">
+                    <input type="text" name="vin" value="<?php echo htmlspecialchars($car_form['vin']); ?>" placeholder="17 символов" maxlength="17">
                 </div>
                 
                 <button type="submit" class="btn btn-primary">Добавить автомобиль</button>

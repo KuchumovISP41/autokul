@@ -438,7 +438,7 @@ require_once 'includes/header.php';
     <div class="filters-panel">
         <div class="filters-row">
             <div class="search-wrapper">
-                <input type="text" id="serviceSearch" placeholder="Поиск услуги по названию или описанию...">
+                <input type="text" id="serviceSearch" maxlength="100" pattern="[\p{L}\p{N}\- ]{0,100}" placeholder="Поиск услуги по названию или описанию...">
             </div>
             <select name="sort" id="sortSelect" class="sort-select">
                 <option value="name" <?php echo $sort_by === 'name' ? 'selected' : ''; ?>>По названию (А-Я)</option>
