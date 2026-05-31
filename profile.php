@@ -1116,31 +1116,8 @@ require_once 'includes/header.php';
             <form method="POST" action="/profile.php?tab=reviews">
                 <input type="hidden" name="action" value="add_review">
 
-                <div class="form-group">
-                    <label>К какой записи отзыв? <small style="color: var(--gray-500);">Необязательно</small></label>
-                    <select name="appointment_id">
-                        <option value="0">Без привязки к записи</option>
-                        <?php foreach ($appointments as $appt): ?>
-                            <?php if ($appt['status'] === 'completed'): ?>
-                                <option value="<?php echo $appt['id']; ?>" <?php echo $review_appointment_id === (int)$appt['id'] ? 'selected' : ''; ?>>
-                                    <?php echo date('d.m.Y', strtotime($appt['appointment_date'])) . ' — ' . htmlspecialchars($appt['services_list'] ?? 'Услуги'); ?>
-                                </option>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>К какой услуге отзыв? <small style="color: var(--gray-500);">Можно выбрать без записи</small></label>
-                    <select name="service_id">
-                        <option value="0">Общий отзыв о сервисе</option>
-                        <?php foreach ($review_services as $service): ?>
-                            <option value="<?php echo (int)$service['id']; ?>">
-                                <?php echo htmlspecialchars($service['name']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                <input type="hidden" name="appointment_id" value="<?php echo $review_appointment_id; ?>">
+                <input type="hidden" name="service_id" value="0">
 
                 <div class="form-group">
                     <label>Оценка <span style="color: var(--primary);">*</span></label>
