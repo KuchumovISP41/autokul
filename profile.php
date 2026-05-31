@@ -296,6 +296,12 @@ if ($active_tab === 'appointments' || $active_tab === 'reviews') {
     $appointments = $stmt->fetchAll();
 }
 
+// Активные услуги для привязки отзывов
+$review_services = [];
+if ($active_tab === 'reviews') {
+    $review_services = $pdo->query("SELECT id, name FROM services WHERE is_active = 1 ORDER BY name ASC")->fetchAll();
+}
+
 // Отзывы пользователя
 $reviews = [];
 if ($active_tab === 'reviews') {
