@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Автокул СТО">
+  <rect width="64" height="64" rx="14" fill="#1a1a1a"/>
+  <path d="M15 36h34l-4-11a6 6 0 0 0-5.7-4H24.7A6 6 0 0 0 19 25l-4 11Z" fill="#d32f2f"/>
+  <path d="M13 36h38v9H13z" fill="#d32f2f"/>
+  <circle cx="23" cy="45" r="6" fill="#fff"/>
+  <circle cx="41" cy="45" r="6" fill="#fff"/>
+  <circle cx="23" cy="45" r="3" fill="#1a1a1a"/>
+  <circle cx="41" cy="45" r="3" fill="#1a1a1a"/>
+  <path d="M24 25h7v8H21l3-8Zm10 0h5.3c1 0 1.9.6 2.2 1.6L44 33H34v-8Z" fill="#fff" opacity=".9"/>
+</svg>

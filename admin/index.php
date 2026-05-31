@@ -128,6 +128,7 @@ $top_services = $pdo->query("
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $page_title; ?></title>
+    <?php renderFaviconLinks(); ?>
     <link rel="stylesheet" href="/assets/css/style.css">
     <style>
         /* ========== СТИЛИ АДМИН-ПАНЕЛИ ========== */
@@ -642,6 +643,9 @@ $top_services = $pdo->query("
                 </a>
                 <a href="/admin/users.php">
                     Клиенты
+                </a>
+                <a href="/admin/payments.php">
+                    Платежи
                 </a>
                 <hr class="sidebar-divider">
                 <a href="/index.php">
