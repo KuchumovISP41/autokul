@@ -192,6 +192,12 @@ function getStoredImageUrl(?string $storedValue, string $fallback, int $width = 
     return $fallback;
 }
 
+
+function renderFaviconLinks(): void {
+    echo '<link rel="icon" type="image/svg+xml" href="/favicon.svg">' . PHP_EOL;
+    echo '<link rel="shortcut icon" href="/favicon.svg" type="image/svg+xml">' . PHP_EOL;
+}
+
 /**
  * PDO options shared by server-level and database-level connections.
  */

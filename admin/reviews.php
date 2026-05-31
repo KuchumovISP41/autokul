@@ -145,10 +145,12 @@ $stats = $pdo->query("
 $query = "
     SELECT r.*, u.full_name AS user_name, u.email AS user_email,
            a.appointment_date,
-           GROUP_CONCAT(DISTINCT s.name ORDER BY s.id SEPARATOR ', ') AS services_list
+           rs.name AS direct_service_name,
+           GROUP_CONCAT(DISTINCT s.name ORDER BY s.id SEPARATOR ', ') AS appointment_services
     FROM reviews r
     JOIN users u ON r.user_id = u.id
     LEFT JOIN appointments a ON r.appointment_id = a.id
+    LEFT JOIN services rs ON r.service_id = rs.id
     LEFT JOIN appointment_services aps ON a.id = aps.appointment_id
     LEFT JOIN services s ON aps.service_id = s.id
     $where_clause
@@ -190,6 +192,7 @@ function buildUrl($params = []) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $page_title; ?></title>
+    <?php renderFaviconLinks(); ?>
     <link rel="stylesheet" href="/assets/css/style.css">
     <style>
         :root { --sidebar-width: 250px; }
@@ -732,9 +735,9 @@ function buildUrl($params = []) {
                                 <?php if ($review['appointment_date']): ?>
                                     <span>Визит: <?php echo date('d.m.Y', strtotime($review['appointment_date'])); ?></span>
                                 <?php endif; ?>
-                                <?php if (!empty($review['services_list'])): ?>
+                                <?php if (!empty(($review['direct_service_name'] ?: $review['appointment_services']))): ?>
                                     <span class="review-service-tag">
-                                         <?php echo htmlspecialchars(mb_substr($review['services_list'], 0, 50)); ?>
+                                         <?php echo htmlspecialchars(mb_substr(($review['direct_service_name'] ?: $review['appointment_services']), 0, 50)); ?>
                                     </span>
                                 <?php endif; ?>
                             </div>
