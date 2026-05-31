@@ -103,6 +103,7 @@ function createApplicationTables(PDO $pdo): void
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         appointment_id INT NULL,
+        service_id INT NULL,
         rating TINYINT NOT NULL,
         text TEXT NOT NULL,
         is_approved TINYINT(1) NOT NULL DEFAULT 0,
@@ -111,8 +112,10 @@ function createApplicationTables(PDO $pdo): void
         INDEX idx_reviews_user (user_id),
         INDEX idx_reviews_approved (is_approved),
         INDEX idx_reviews_appointment (appointment_id),
+        INDEX idx_reviews_service (service_id),
         CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
         CONSTRAINT fk_reviews_appointment FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON UPDATE CASCADE ON DELETE SET NULL,
+        CONSTRAINT fk_reviews_service FOREIGN KEY (service_id) REFERENCES services(id) ON UPDATE CASCADE ON DELETE SET NULL,
         CONSTRAINT chk_reviews_rating CHECK (rating BETWEEN 1 AND 5)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
@@ -162,7 +165,11 @@ function ensureApplicationColumns(PDO $pdo): void
     dbEnsureColumn($pdo, 'work_schedule', 'slot_duration', 'INT NOT NULL DEFAULT 60');
     dbEnsureColumn($pdo, 'work_schedule', 'is_working', 'TINYINT(1) NOT NULL DEFAULT 1');
     dbEnsureColumn($pdo, 'payments', 'document_type', "VARCHAR(50) NOT NULL DEFAULT 'receipt'");
+    dbEnsureColumn($pdo, 'reviews', 'service_id', 'INT NULL');
+    dbEnsureIndex($pdo, 'reviews', 'idx_reviews_service', 'service_id');
+    dbEnsureForeignKey($pdo, 'reviews', 'fk_reviews_service', 'service_id', 'services', 'id', 'SET NULL');
 }
+
 
 function dbEnsureColumn(PDO $pdo, string $table, string $column, string $definition): void
 {
@@ -180,6 +187,41 @@ function dbEnsureColumn(PDO $pdo, string $table, string $column, string $definit
     }
 }
 
+function dbEnsureIndex(PDO $pdo, string $table, string $index, string $columns): void
+{
+    if (!preg_match('/^[A-Za-z0-9_]+$/', $table) || !preg_match('/^[A-Za-z0-9_]+$/', $index)) {
+        throw new InvalidArgumentException('Некорректное имя таблицы или индекса.');
+    }
+
+    $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND INDEX_NAME = :index_name'
+    );
+    $stmt->execute(['table' => $table, 'index_name' => $index]);
+
+    if ((int)$stmt->fetchColumn() === 0) {
+        $pdo->exec("ALTER TABLE `{$table}` ADD INDEX `{$index}` ({$columns})");
+    }
+}
+
+function dbEnsureForeignKey(PDO $pdo, string $table, string $constraint, string $column, string $refTable, string $refColumn, string $onDelete = 'RESTRICT'): void
+{
+    foreach ([$table, $constraint, $column, $refTable, $refColumn] as $identifier) {
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $identifier)) {
+            throw new InvalidArgumentException('Некорректное имя внешнего ключа.');
+        }
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = :table AND CONSTRAINT_NAME = :constraint_name AND CONSTRAINT_TYPE = 'FOREIGN KEY'"
+    );
+    $stmt->execute(['table' => $table, 'constraint_name' => $constraint]);
+
+    if ((int)$stmt->fetchColumn() === 0) {
+        $safeOnDelete = in_array($onDelete, ['RESTRICT', 'CASCADE', 'SET NULL'], true) ? $onDelete : 'RESTRICT';
+        $pdo->exec("ALTER TABLE `{$table}` ADD CONSTRAINT `{$constraint}` FOREIGN KEY (`{$column}`) REFERENCES `{$refTable}`(`{$refColumn}`) ON UPDATE CASCADE ON DELETE {$safeOnDelete}");
+    }
+}
+
 function seedApplicationData(PDO $pdo): void
 {
     seedUsers($pdo);
@@ -193,6 +235,9 @@ function seedUsers(PDO $pdo): void
     $users = [
         ['Администратор', 'admin@autokul.ru', '+7 (900) 000-00-01', 'admin'],
         ['Иван Петров', 'ivan@example.com', '+7 (900) 000-00-02', 'client'],
+        ['Анна Смирнова', 'anna@example.com', '+7 (900) 000-00-04', 'client'],
+        ['Сергей Волков', 'sergey@example.com', '+7 (900) 000-00-05', 'client'],
+        ['Мария Кузнецова', 'maria@example.com', '+7 (900) 000-00-06', 'client'],
         ['Механик Автокул', 'mechanic@autokul.ru', '+7 (900) 000-00-03', 'mechanic'],
     ];
 
@@ -284,70 +329,185 @@ function seedWorkSchedule(PDO $pdo): void
 
 function seedDemoAppointmentsAndReviews(PDO $pdo): void
 {
-    $clientId = (int)$pdo->query("SELECT id FROM users WHERE email = 'ivan@example.com' LIMIT 1")->fetchColumn();
-    if ($clientId <= 0) {
-        return;
-    }
+    $demoClients = [
+        [
+            'email' => 'ivan@example.com',
+            'car' => ['Toyota', 'Camry', 2018, 'JTNB11HK0J3000001', 'А123ВС35'],
+            'appointments' => [
+                ['+1 day', '10:00:00', 'pending', 'Демо-запись: замена масла и фильтра.', ['Замена масла и фильтра']],
+                ['-7 days', '12:00:00', 'completed', 'Демо-выполненная запись: компьютерная диагностика.', ['Компьютерная диагностика']],
+            ],
+            'reviews' => [
+                ['Компьютерная диагностика', 5, 'Быстро нашли проблему и подробно объяснили, что нужно сделать. Отличный сервис!'],
+            ],
+            'payments' => [
+                ['AK-2026-0001', 'paid', 'card', 'receipt', 1500],
+            ],
+        ],
+        [
+            'email' => 'anna@example.com',
+            'car' => ['Kia', 'Rio', 2020, 'Z94CB41BBLR000002', 'В456ОР35'],
+            'appointments' => [
+                ['-3 days', '14:00:00', 'completed', 'Демо-выполненная запись: шиномонтаж.', ['Шиномонтаж R15–R17']],
+                ['+3 days', '11:00:00', 'confirmed', 'Демо-запись: диагностика перед покупкой.', ['Диагностика перед покупкой']],
+            ],
+            'reviews' => [
+                ['Шиномонтаж R15–R17', 5, 'Записалась онлайн, приехала без очереди. Колёса отбалансировали аккуратно, рекомендую.'],
+            ],
+            'payments' => [
+                ['AK-2026-0002', 'paid', 'card', 'receipt', 2400],
+                ['AK-2026-0003', 'pending', 'invoice', 'invoice', 3500],
+            ],
+        ],
+        [
+            'email' => 'sergey@example.com',
+            'car' => ['Volkswagen', 'Polo', 2017, 'XW8ZZZ61ZHG000003', 'С789МТ35'],
+            'appointments' => [
+                ['-14 days', '09:00:00', 'completed', 'Демо-выполненная запись: тормозные колодки.', ['Замена тормозных колодок']],
+                ['+5 days', '15:00:00', 'pending', 'Демо-запись: плановое ТО.', ['Плановое ТО']],
+            ],
+            'reviews' => [
+                ['Замена тормозных колодок', 4, 'Работу сделали качественно, после ремонта тормоза стали заметно лучше.'],
+            ],
+            'payments' => [
+                ['AK-2026-0004', 'paid', 'yoomoney', 'receipt', 2200],
+            ],
+        ],
+        [
+            'email' => 'maria@example.com',
+            'car' => ['Hyundai', 'Creta', 2021, 'TMAJ3815BMJ000004', 'Е321КХ35'],
+            'appointments' => [
+                ['-1 day', '16:00:00', 'completed', 'Демо-выполненная запись: ремонт прокола.', ['Ремонт прокола']],
+            ],
+            'reviews' => [
+                ['Ремонт прокола', 5, 'Прокол устранили за полчаса, всё прозрачно по цене и без навязанных работ.'],
+            ],
+            'payments' => [
+                ['AK-2026-0005', 'paid', 'card', 'receipt', 700],
+            ],
+        ],
+    ];
 
     $carStmt = $pdo->prepare(
         'INSERT INTO cars (user_id, brand, model, year, vin, license_plate)
          SELECT :user_id, :brand, :model, :year, :vin, :license_plate
          WHERE NOT EXISTS (SELECT 1 FROM cars WHERE user_id = :user_check AND license_plate = :plate_check)'
     );
-    $carStmt->execute([
-        'user_id' => $clientId,
-        'brand' => 'Toyota',
-        'model' => 'Camry',
-        'year' => 2018,
-        'vin' => 'JTNB11HK0J3000001',
-        'license_plate' => 'А123ВС35',
-        'user_check' => $clientId,
-        'plate_check' => 'А123ВС35',
-    ]);
+    $appointmentStmt = $pdo->prepare(
+        'INSERT INTO appointments (user_id, car_id, appointment_date, appointment_time, status, notes)
+         SELECT :user_id, :car_id, :appointment_date, :appointment_time, :status, :notes
+         WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE user_id = :user_check AND notes = :notes_check)'
+    );
+    $linkStmt = $pdo->prepare('INSERT IGNORE INTO appointment_services (appointment_id, service_id) VALUES (:appointment_id, :service_id)');
+    $reviewStmt = $pdo->prepare(
+        'INSERT INTO reviews (user_id, appointment_id, service_id, rating, text, is_approved)
+         SELECT :user_id, :appointment_id, :service_id, :rating, :text, 1
+         WHERE NOT EXISTS (SELECT 1 FROM reviews WHERE user_id = :user_check AND text = :text_check)'
+    );
+    $paymentStmt = $pdo->prepare(
+        'INSERT INTO payments (user_id, appointment_id, amount, payment_method, status, invoice_number, document_type)
+         SELECT :user_id, :appointment_id, :amount, :payment_method, :status, :invoice_number, :document_type
+         WHERE NOT EXISTS (SELECT 1 FROM payments WHERE invoice_number = :invoice_check)'
+    );
 
-    $carId = (int)$pdo->query("SELECT id FROM cars WHERE user_id = {$clientId} ORDER BY id LIMIT 1")->fetchColumn();
-    $serviceId = (int)$pdo->query("SELECT id FROM services ORDER BY id LIMIT 1")->fetchColumn();
-    if ($carId <= 0 || $serviceId <= 0) {
-        return;
+    foreach ($demoClients as $client) {
+        $userStmt = $pdo->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
+        $userStmt->execute(['email' => $client['email']]);
+        $userId = (int)$userStmt->fetchColumn();
+        if ($userId <= 0) {
+            continue;
+        }
+
+        [$brand, $model, $year, $vin, $plate] = $client['car'];
+        $carStmt->execute([
+            'user_id' => $userId,
+            'brand' => $brand,
+            'model' => $model,
+            'year' => $year,
+            'vin' => $vin,
+            'license_plate' => $plate,
+            'user_check' => $userId,
+            'plate_check' => $plate,
+        ]);
+
+        $carSelect = $pdo->prepare('SELECT id FROM cars WHERE user_id = :user_id AND license_plate = :plate LIMIT 1');
+        $carSelect->execute(['user_id' => $userId, 'plate' => $plate]);
+        $carId = (int)$carSelect->fetchColumn();
+        if ($carId <= 0) {
+            continue;
+        }
+
+        $appointmentsByService = [];
+        foreach ($client['appointments'] as [$dateOffset, $time, $status, $notes, $serviceNames]) {
+            $appointmentDate = date('Y-m-d', strtotime($dateOffset));
+            $appointmentStmt->execute([
+                'user_id' => $userId,
+                'car_id' => $carId,
+                'appointment_date' => $appointmentDate,
+                'appointment_time' => $time,
+                'status' => $status,
+                'notes' => $notes,
+                'user_check' => $userId,
+                'notes_check' => $notes,
+            ]);
+
+            $appointmentSelect = $pdo->prepare('SELECT id FROM appointments WHERE user_id = :user_id AND notes = :notes LIMIT 1');
+            $appointmentSelect->execute(['user_id' => $userId, 'notes' => $notes]);
+            $appointmentId = (int)$appointmentSelect->fetchColumn();
+            if ($appointmentId <= 0) {
+                continue;
+            }
+
+            foreach ($serviceNames as $serviceName) {
+                $serviceId = getDemoServiceId($pdo, $serviceName);
+                if ($serviceId > 0) {
+                    $linkStmt->execute(['appointment_id' => $appointmentId, 'service_id' => $serviceId]);
+                    $appointmentsByService[$serviceName] = $appointmentId;
+                }
+            }
+        }
+
+        foreach ($client['reviews'] as [$serviceName, $rating, $text]) {
+            $serviceId = getDemoServiceId($pdo, $serviceName);
+            $reviewStmt->execute([
+                'user_id' => $userId,
+                'appointment_id' => $appointmentsByService[$serviceName] ?? null,
+                'service_id' => $serviceId > 0 ? $serviceId : null,
+                'rating' => $rating,
+                'text' => $text,
+                'user_check' => $userId,
+                'text_check' => $text,
+            ]);
+        }
+
+        foreach ($client['payments'] as [$invoice, $status, $method, $documentType, $amount]) {
+            $appointmentId = null;
+            foreach ($appointmentsByService as $candidateAppointmentId) {
+                $appointmentId = $candidateAppointmentId;
+                break;
+            }
+            $paymentStmt->execute([
+                'user_id' => $userId,
+                'appointment_id' => $appointmentId,
+                'amount' => $amount,
+                'payment_method' => $method,
+                'status' => $status,
+                'invoice_number' => $invoice,
+                'document_type' => $documentType,
+                'invoice_check' => $invoice,
+            ]);
+        }
+    }
+}
+
+function getDemoServiceId(PDO $pdo, string $serviceName): int
+{
+    static $cache = [];
+    if (!array_key_exists($serviceName, $cache)) {
+        $stmt = $pdo->prepare('SELECT id FROM services WHERE name = :name LIMIT 1');
+        $stmt->execute(['name' => $serviceName]);
+        $cache[$serviceName] = (int)$stmt->fetchColumn();
     }
 
-    if ((int)$pdo->query('SELECT COUNT(*) FROM appointments')->fetchColumn() === 0) {
-        $appointmentStmt = $pdo->prepare(
-            'INSERT INTO appointments (user_id, car_id, appointment_date, appointment_time, status, notes)
-             VALUES (:user_id, :car_id, :appointment_date, :appointment_time, :status, :notes)'
-        );
-        $appointmentStmt->execute([
-            'user_id' => $clientId,
-            'car_id' => $carId,
-            'appointment_date' => date('Y-m-d', strtotime('+1 day')),
-            'appointment_time' => '10:00:00',
-            'status' => 'pending',
-            'notes' => 'Демо-запись для проверки сайта после деплоя.',
-        ]);
-        $pendingAppointmentId = (int)$pdo->lastInsertId();
-
-        $appointmentStmt->execute([
-            'user_id' => $clientId,
-            'car_id' => $carId,
-            'appointment_date' => date('Y-m-d', strtotime('-7 days')),
-            'appointment_time' => '12:00:00',
-            'status' => 'completed',
-            'notes' => 'Демо-выполненная запись для отзывов и статистики.',
-        ]);
-        $completedAppointmentId = (int)$pdo->lastInsertId();
-
-        $linkStmt = $pdo->prepare('INSERT IGNORE INTO appointment_services (appointment_id, service_id) VALUES (:appointment_id, :service_id)');
-        $linkStmt->execute(['appointment_id' => $pendingAppointmentId, 'service_id' => $serviceId]);
-        $linkStmt->execute(['appointment_id' => $completedAppointmentId, 'service_id' => $serviceId]);
-
-        $reviewStmt = $pdo->prepare(
-            'INSERT INTO reviews (user_id, appointment_id, rating, text, is_approved)
-             VALUES (:user_id, :appointment_id, 5, :text, 1)'
-        );
-        $reviewStmt->execute([
-            'user_id' => $clientId,
-            'appointment_id' => $completedAppointmentId,
-            'text' => 'Быстро нашли проблему и подробно объяснили, что нужно сделать. Отличный сервис!',
-        ]);
-    }
+    return $cache[$serviceName];
 }

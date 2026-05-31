@@ -17,6 +17,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
     <meta name="description" content="Автокул СТО — профессиональный ремонт и техническое обслуживание автомобилей в Вологде. Онлайн-запись, диагностика, ремонт.">
     <meta name="keywords" content="автосервис, СТО, ремонт автомобилей, техобслуживание, диагностика, Вологда">
     <title><?php echo $page_title ?? 'Автокул СТО — Ремонт и обслуживание автомобилей'; ?></title>
+    <?php renderFaviconLinks(); ?>
     <link rel="stylesheet" href="/assets/css/style.css">
     <style>
         /* ==========================================

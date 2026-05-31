@@ -52,10 +52,12 @@ $total_pages = ceil($total_reviews / $per_page);
 $query = "
     SELECT r.*, u.full_name AS user_name, u.created_at AS user_since,
            a.appointment_date,
-           GROUP_CONCAT(DISTINCT s.name SEPARATOR ', ') AS services_list
+           rs.name AS direct_service_name,
+           GROUP_CONCAT(DISTINCT s.name ORDER BY s.name SEPARATOR ', ') AS appointment_services
     FROM reviews r
     JOIN users u ON r.user_id = u.id
     LEFT JOIN appointments a ON r.appointment_id = a.id
+    LEFT JOIN services rs ON r.service_id = rs.id
     LEFT JOIN appointment_services aps ON a.id = aps.appointment_id
     LEFT JOIN services s ON aps.service_id = s.id
     $where
@@ -601,10 +603,10 @@ $review_avatar = $stmt_av->fetchColumn();
                             <span class="review-verified">Подтверждённый клиент</span>
                         <?php endif; ?>
 
-                        <?php if (!empty($review['services_list'])): ?>
+                        <?php if (!empty(($review['direct_service_name'] ?: $review['appointment_services']))): ?>
                             <span class="review-service-badge">
-                                <?php echo htmlspecialchars(mb_substr($review['services_list'], 0, 60)); ?>
-                                <?php echo mb_strlen($review['services_list']) > 60 ? '...' : ''; ?>
+                                <?php echo htmlspecialchars(mb_substr(($review['direct_service_name'] ?: $review['appointment_services']), 0, 60)); ?>
+                                <?php echo mb_strlen(($review['direct_service_name'] ?: $review['appointment_services'])) > 60 ? '...' : ''; ?>
                             </span>
                         <?php endif; ?>
                     </div>
