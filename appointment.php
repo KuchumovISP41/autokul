@@ -271,7 +271,7 @@ require_once 'includes/header.php';
         font-size: 20px;
         margin-bottom: 20px;
         display: flex;
-        align-items: center;
+       
         gap: 12px;
         justify-content: flex-start;
         flex-wrap: wrap;
