@@ -108,14 +108,18 @@ foreach ($week_stats as $row) {
 
 // Топ услуг за месяц
 $top_services = $pdo->query("
-    SELECT s.name, COUNT(*) AS count, SUM(s.price) AS revenue
+    SELECT 
+        s.id,
+        s.name, 
+        COUNT(DISTINCT a.id) AS count, 
+        SUM(s.price) AS revenue
     FROM appointments a
     JOIN appointment_services aps ON a.id = aps.appointment_id
     JOIN services s ON aps.service_id = s.id
     WHERE a.status = 'completed'
       AND MONTH(a.appointment_date) = MONTH(CURDATE())
       AND YEAR(a.appointment_date) = YEAR(CURDATE())
-    GROUP BY s.id
+    GROUP BY s.id, s.name
     ORDER BY count DESC
     LIMIT 5
 ")->fetchAll();
