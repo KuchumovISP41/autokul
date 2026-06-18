@@ -12,6 +12,9 @@ if (class_exists(\Dotenv\Dotenv::class) && file_exists(__DIR__ . '/../.env')) {
 
 require_once __DIR__ . '/validation.php';
 
+// Все серверные даты приложения показываем и сохраняем в московском часовом поясе.
+date_default_timezone_set('Europe/Moscow');
+
 /**
  * Read an environment value from $_ENV, $_SERVER or getenv().
  */
@@ -234,12 +237,14 @@ function getDBConnection(): PDO {
 
     try {
         $pdo = new PDO($dsn, DB_USER, DB_PASS, getPDOOptions());
+        $pdo->exec("SET time_zone = '+03:00'");
     } catch (PDOException $e) {
         $isUnknownDatabase = ($e->errorInfo[1] ?? null) === 1049 || str_contains($e->getMessage(), 'Unknown database');
         if ($isUnknownDatabase && DB_AUTO_MIGRATE) {
             try {
                 createConfiguredDatabase();
                 $pdo = new PDO($dsn, DB_USER, DB_PASS, getPDOOptions());
+                $pdo->exec("SET time_zone = '+03:00'");
             } catch (PDOException $createException) {
                 error_log('DB create/connect error: ' . $createException->getMessage());
                 renderDatabaseError($createException);

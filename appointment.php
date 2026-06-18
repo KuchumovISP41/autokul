@@ -51,6 +51,25 @@ foreach ($categories as $row) {
     }
 }
 
+function pluralizeServices(int $count): string {
+    $mod100 = $count % 100;
+    $mod10 = $count % 10;
+
+    if ($mod100 >= 11 && $mod100 <= 14) {
+        return 'услуг';
+    }
+
+    if ($mod10 === 1) {
+        return 'услуга';
+    }
+
+    if ($mod10 >= 2 && $mod10 <= 4) {
+        return 'услуги';
+    }
+
+    return 'услуг';
+}
+
 // Переменные для ошибок и успеха
 $error_message = '';
 $success_message = '';
@@ -456,6 +475,7 @@ require_once 'includes/header.php';
     }
 
     .service-item-info .svc-name {
+        overflow-wrap: anywhere;
         font-weight: 600;
         font-size: 14px;
         color: var(--secondary);
@@ -627,6 +647,47 @@ require_once 'includes/header.php';
         }
     }
 
+    @media (orientation: landscape) and (max-height: 520px) {
+        .appointment-page {
+            margin: 12px auto;
+            padding: 0 16px;
+        }
+
+        .appointment-page h1 {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+
+        .appointment-subtitle {
+            margin-bottom: 16px;
+        }
+
+        .step-card {
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .category-header {
+            padding: 12px 14px;
+        }
+
+        .service-item {
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .service-item-info .svc-desc {
+            white-space: normal;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .time-slots-grid {
+            grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+        }
+    }
+
     @media (max-width: 760px) {
         .appointment-page h1 {
             font-size: 24px;
@@ -736,7 +797,7 @@ require_once 'includes/header.php';
                             <div class="category-header-left">
                                 <div class="category-info">
                                     <h3><?php echo htmlspecialchars($cat_data['name']); ?></h3>
-                                    <span><?php echo count($cat_data['services']); ?> услуг</span>
+                                    <span><?php $services_count = count($cat_data['services']); echo $services_count . ' ' . pluralizeServices($services_count); ?></span>
                                 </div>
                             </div>
                             <span class="category-badge">Выбрано</span>
@@ -775,8 +836,8 @@ require_once 'includes/header.php';
             <div class="services-summary" id="servicesSummary">
                 <div class="services-summary-left">
                     <div class="summary-item">
-                        <strong>Выбрано услуг</strong>
-                        <span class="value" id="selectedCount">0</span>
+                        <strong>Выбрано</strong>
+                        <span class="value" id="selectedCount">0 услуг</span>
                     </div>
                     <div class="summary-item">
                         <strong>Общее время</strong>
@@ -958,11 +1019,30 @@ function onServiceChange(checkbox) {
     }
 }
 
+function pluralizeServices(count) {
+    const mod100 = count % 100;
+    const mod10 = count % 10;
+
+    if (mod100 >= 11 && mod100 <= 14) {
+        return 'услуг';
+    }
+
+    if (mod10 === 1) {
+        return 'услуга';
+    }
+
+    if (mod10 >= 2 && mod10 <= 4) {
+        return 'услуги';
+    }
+
+    return 'услуг';
+}
+
 function updateCategoryBadge(accordion, catId) {
     const checkedInCategory = document.querySelectorAll(`input[data-category="${catId}"]:checked`).length;
     if (checkedInCategory > 0) {
         accordion.classList.add('has-selected');
-        accordion.querySelector('.category-badge').textContent = 'Выбрано: ' + checkedInCategory;
+        accordion.querySelector('.category-badge').textContent = checkedInCategory + ' ' + pluralizeServices(checkedInCategory);
     } else {
         accordion.classList.remove('has-selected');
     }
@@ -979,7 +1059,7 @@ function updateSummary() {
         price += parseFloat(cb.dataset.price);
     });
 
-    document.getElementById('selectedCount').textContent = count;
+    document.getElementById('selectedCount').textContent = count + ' ' + pluralizeServices(count);
     document.getElementById('totalDuration').textContent = duration + ' мин.';
     document.getElementById('totalPrice').textContent = new Intl.NumberFormat('ru-RU').format(price) + ' ₽';
 }

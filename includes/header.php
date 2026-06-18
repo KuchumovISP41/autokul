@@ -361,13 +361,13 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         }
 
         /* ========== АДАПТИВНОСТЬ ========== */
-        @media (max-width: 1024px) {
+        @media (max-width: 1100px) {
             .header-phone {
                 display: none;
             }
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 980px) {
             .site-header {
                 height: 60px;
             }
@@ -378,6 +378,8 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
                 top: 64px;
                 left: 10px;
                 right: 10px;
+                max-height: calc(100vh - 76px);
+                overflow-y: auto;
                 background: #ffffff;
                 flex-direction: column;
                 padding: 10px;
@@ -435,7 +437,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
             }
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 520px) {
             .header-logo-name {
                 font-size: 17px;
             }

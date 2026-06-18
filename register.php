@@ -71,15 +71,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Добавляем пользователя в БД
             $stmt = $pdo->prepare("
-                INSERT INTO users (full_name, email, password, phone, role) 
-                VALUES (:full_name, :email, :password, :phone, 'client')
+                INSERT INTO users (full_name, email, password, phone, role, created_at)
+                VALUES (:full_name, :email, :password, :phone, 'client', :created_at)
             ");
             
             $stmt->execute([
                 'full_name' => $form_data['full_name'],
                 'email' => $form_data['email'],
                 'password' => $password_hash,
-                'phone' => $form_data['phone'] ?: null
+                'phone' => $form_data['phone'] ?: null,
+                'created_at' => date('Y-m-d H:i:s')
             ]);
             
             $user_id = $pdo->lastInsertId();
