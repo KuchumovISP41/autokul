@@ -41,8 +41,10 @@ $car_form = [
 ];
 
 // --- Загрузка аватара ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_avatar') {
-    if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (($_POST['action'] ?? null) === 'upload_avatar' || (empty($_POST) && empty($_FILES) && !empty($_SERVER['CONTENT_LENGTH'])))) {
+    if (empty($_POST) && empty($_FILES) && !empty($_SERVER['CONTENT_LENGTH'])) {
+        $error_message = 'Файл слишком большой для загрузки. Выберите фото до ' . formatUploadSize(defined('UPLOAD_MAX_SIZE') ? UPLOAD_MAX_SIZE : 10 * 1024 * 1024) . '.';
+    } elseif (isset($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
         $result = saveAvatar($_FILES['avatar'], $user['id'], $pdo);
         if ($result['success']) {
             $_SESSION['user_avatar'] = $result['avatar_path'];
@@ -829,8 +831,8 @@ require_once 'includes/header.php';
     <div style="flex: 1; min-width: 200px;">
         <h4 style="font-size: 16px; font-weight: 600; color: var(--secondary); margin-bottom: 6px;">Фотография профиля</h4>
         <p style="font-size: 13px; color: var(--gray-500); margin-bottom: 14px; line-height: 1.6;">
-            Загрузите фотографию в формате JPG, PNG, WebP или GIF.<br>
-            Максимальный размер: <strong>5 МБ</strong>. Минимальное разрешение: <strong>100×100 пикселей</strong>.<br>
+            Загрузите фотографию в формате JPG, PNG, WebP, GIF или HEIC/HEIF.<br>
+            Максимальный размер: <strong><?php echo htmlspecialchars(formatUploadSize(defined('UPLOAD_MAX_SIZE') ? UPLOAD_MAX_SIZE : 10 * 1024 * 1024)); ?></strong>. Минимальное разрешение: <strong>100×100 пикселей</strong>.<br>
             Изображение будет автоматически обрезано до квадрата по центру.
         </p>
 
@@ -838,7 +840,8 @@ require_once 'includes/header.php';
             <!-- Форма загрузки -->
             <form method="POST" action="/profile.php?tab=profile" enctype="multipart/form-data" id="avatarUploadForm" style="display: inline;">
                 <input type="hidden" name="action" value="upload_avatar">
-                <input type="file" name="avatar" id="avatarFileInput" accept="image/jpeg,image/png,image/webp,image/gif"
+                <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo (int)(defined('UPLOAD_MAX_SIZE') ? UPLOAD_MAX_SIZE : 10 * 1024 * 1024); ?>">
+                <input type="file" name="avatar" id="avatarFileInput" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif"
                        style="display: none;">
                 <button type="button" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px;"
                         onclick="document.getElementById('avatarFileInput').click();">
@@ -1155,17 +1158,17 @@ if (avatarFileInput) {
     avatarFileInput.addEventListener('change', function() {
         if (this.files && this.files[0]) {
             // Проверяем размер на клиенте
-            const maxSize = 5 * 1024 * 1024;
+            const maxSize = <?php echo (int)(defined('UPLOAD_MAX_SIZE') ? UPLOAD_MAX_SIZE : 10 * 1024 * 1024); ?>;
             if (this.files[0].size > maxSize) {
-                alert('Размер файла превышает 5 МБ. Пожалуйста, выберите изображение меньшего размера.');
+                alert('Размер файла превышает <?php echo addslashes(formatUploadSize(defined('UPLOAD_MAX_SIZE') ? UPLOAD_MAX_SIZE : 10 * 1024 * 1024)); ?>. Пожалуйста, выберите изображение меньшего размера.');
                 this.value = '';
                 return;
             }
 
             // Проверяем тип на клиенте
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-            if (!allowedTypes.includes(this.files[0].type)) {
-                alert('Недопустимый формат файла. Разрешены: JPG, PNG, WebP, GIF.');
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'];
+            if (this.files[0].type && !allowedTypes.includes(this.files[0].type)) {
+                alert('Недопустимый формат файла. Разрешены: JPG, PNG, WebP, GIF, HEIC/HEIF.');
                 this.value = '';
                 return;
             }

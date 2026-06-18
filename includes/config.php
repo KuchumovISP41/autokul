@@ -65,7 +65,7 @@ define('CLOUDINARY_CLOUD_NAME', envValue('CLOUDINARY_CLOUD_NAME', ''));
 define('CLOUDINARY_API_KEY', envValue('CLOUDINARY_API_KEY', ''));
 define('CLOUDINARY_API_SECRET', envValue('CLOUDINARY_API_SECRET', ''));
 define('CLOUDINARY_FOLDER', trim(envValue('CLOUDINARY_FOLDER', 'autokul_sto'), '/'));
-define('UPLOAD_MAX_SIZE', (int) envValue('UPLOAD_MAX_SIZE', 5 * 1024 * 1024));
+define('UPLOAD_MAX_SIZE', (int) envValue('UPLOAD_MAX_SIZE', 10 * 1024 * 1024));
 define('DB_AUTO_MIGRATE', filter_var(envValue('DB_AUTO_MIGRATE', true), FILTER_VALIDATE_BOOLEAN));
 
 /**

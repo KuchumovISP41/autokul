@@ -16,6 +16,13 @@ RUN apt-get update && apt-get install -y \
 # Установка Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Лимиты PHP для загрузки фотографий из галереи
+RUN { \
+        echo 'upload_max_filesize=10M'; \
+        echo 'post_max_size=12M'; \
+        echo 'memory_limit=256M'; \
+    } > /usr/local/etc/php/conf.d/uploads.ini
+
 WORKDIR /var/www/html
 
 # Копируем файлы проекта
@@ -33,6 +40,7 @@ RUN mkdir -p uploads/avatars uploads/services && chmod -R 755 uploads
 RUN echo 'server { \
     listen 8080; \
     server_name _; \
+    client_max_body_size 12M; \
     root /var/www/html; \
     index index.php index.html; \
     \
