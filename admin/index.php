@@ -740,26 +740,27 @@ $top_services = $pdo->query("
                     </div>
                 </div>
 
-                <!-- Топ услуг -->
-                <div class="admin-card">
-                    <h3>Топ услуг за месяц</h3>
-                    <?php if (count($top_services) > 0): ?>
-                        <div class="top-services-list">
-                            <?php foreach ($top_services as $index => $svc): ?>
-                                <div class="top-service-item">
-                                    <span class="top-service-rank"><?php echo $index + 1; ?></span>
-                                    <div class="top-service-info">
-                                        <div class="top-service-name"><?php echo htmlspecialchars($svc['name']); ?></div>
-                                        <div class="top-service-count"><?php echo $svc['count']; ?> заказ(ов)</div>
-                                    </div>
-                                    <span class="top-service-revenue"><?php echo number_format($svc['revenue'], 0, ',', ' '); ?> ₽</span>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php else: ?>
-                        <p class="no-data">Нет данных за этот месяц</p>
-                    <?php endif; ?>
+               <!-- Топ услуг -->
+<div class="admin-card">
+    <h3>Топ услуг за месяц</h3>
+    <?php if (count($top_services) > 0): ?>
+        <div class="top-services-list">
+            <?php foreach ($top_services as $index => $svc): ?>
+                <div class="top-service-item">
+                    <span class="top-service-rank"><?php echo $index + 1; ?></span>
+                    <div class="top-service-info">
+                        <div class="top-service-name"><?php echo htmlspecialchars($svc['name']); ?></div>
+                        <!-- Скрытый счетчик для логики, но не отображается -->
+                        <!-- <div class="top-service-count"><?php echo $svc['service_count']; ?> заказ(ов)</div> -->
+                    </div>
+                    <span class="top-service-revenue"><?php echo number_format($svc['revenue'], 0, ',', ' '); ?> ₽</span>
                 </div>
+            <?php endforeach; ?>
+        </div>
+    <?php else: ?>
+        <p class="no-data">Нет данных за этот месяц</p>
+    <?php endif; ?>
+</div>
 
             </div>
 
