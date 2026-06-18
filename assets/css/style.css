@@ -502,10 +502,7 @@ img {
     counter-reset: step;
 }
 
-.step-card {
-    position: relative;
-    padding: 30px 20px;
-}
+
 
 .step-number {
     width: 50px;
