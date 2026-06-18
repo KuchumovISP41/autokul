@@ -280,7 +280,7 @@ require_once 'includes/header.php';
 
     .step-title-text {
         display: inline-flex;
-        align-items: center;
+       
         gap: 8px;
     }
 
