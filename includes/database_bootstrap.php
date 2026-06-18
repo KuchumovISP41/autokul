@@ -228,6 +228,7 @@ function seedApplicationData(PDO $pdo): void
     seedCategoriesAndServices($pdo);
     seedWorkSchedule($pdo);
     seedDemoAppointmentsAndReviews($pdo);
+    seedDemoNotifications($pdo);
 }
 
 function seedUsers(PDO $pdo): void
@@ -266,6 +267,8 @@ function seedCategoriesAndServices(PDO $pdo): void
         'Техническое обслуживание' => 'Плановые работы, замена жидкостей и расходников.',
         'Ремонт ходовой' => 'Подвеска, рулевое управление и тормозная система.',
         'Шиномонтаж' => 'Сезонная замена шин, балансировка и ремонт колёс.',
+        'Кузовные работы' => 'Локальный ремонт, полировка, восстановление лакокрасочного покрытия.',
+        'Электрика' => 'Диагностика и ремонт электрооборудования, освещения и зарядной системы.',
     ];
 
     $categoryStmt = $pdo->prepare(
@@ -286,6 +289,10 @@ function seedCategoriesAndServices(PDO $pdo): void
         ['Ремонт ходовой', 'Замена тормозных колодок', 'Замена передних или задних тормозных колодок с проверкой тормозной системы.', 2200, 90, 'uploads/avatars/default-service.png'],
         ['Шиномонтаж', 'Шиномонтаж R15–R17', 'Снятие, установка, балансировка комплекта колёс.', 2400, 60, 'uploads/avatars/default-service.png'],
         ['Шиномонтаж', 'Ремонт прокола', 'Ремонт прокола шины с проверкой герметичности.', 700, 30, 'uploads/avatars/default-service.png'],
+        ['Кузовные работы', 'Полировка кузова', 'Мягкая абразивная полировка кузова с восстановлением блеска покрытия.', 6500, 240, 'uploads/avatars/default-service.png'],
+        ['Кузовные работы', 'Локальная покраска элемента', 'Подбор цвета, подготовка и локальная покраска одного элемента кузова.', 9000, 360, 'uploads/avatars/default-service.png'],
+        ['Электрика', 'Диагностика электрики', 'Проверка цепей, генератора, аккумулятора, освещения и электронных блоков.', 1800, 90, 'uploads/avatars/default-service.png'],
+        ['Электрика', 'Замена аккумулятора', 'Подбор, замена и регистрация аккумулятора с проверкой зарядной системы.', 1000, 30, 'uploads/avatars/default-service.png'],
     ];
 
     $serviceStmt = $pdo->prepare(
@@ -335,6 +342,7 @@ function seedDemoAppointmentsAndReviews(PDO $pdo): void
             'car' => ['Toyota', 'Camry', 2018, 'JTNB11HK0J3000001', 'А123ВС35'],
             'appointments' => [
                 ['+1 day', '10:00:00', 'pending', 'Демо-запись: замена масла и фильтра.', ['Замена масла и фильтра']],
+                ['+8 days', '13:00:00', 'confirmed', 'Демо-запись: диагностика электрики.', ['Диагностика электрики']],
                 ['-7 days', '12:00:00', 'completed', 'Демо-выполненная запись: компьютерная диагностика.', ['Компьютерная диагностика']],
             ],
             'reviews' => [
@@ -350,6 +358,7 @@ function seedDemoAppointmentsAndReviews(PDO $pdo): void
             'appointments' => [
                 ['-3 days', '14:00:00', 'completed', 'Демо-выполненная запись: шиномонтаж.', ['Шиномонтаж R15–R17']],
                 ['+3 days', '11:00:00', 'confirmed', 'Демо-запись: диагностика перед покупкой.', ['Диагностика перед покупкой']],
+                ['+10 days', '09:00:00', 'pending', 'Демо-запись: полировка кузова.', ['Полировка кузова']],
             ],
             'reviews' => [
                 ['Шиномонтаж R15–R17', 5, 'Записалась онлайн, приехала без очереди. Колёса отбалансировали аккуратно, рекомендую.'],
@@ -378,6 +387,7 @@ function seedDemoAppointmentsAndReviews(PDO $pdo): void
             'car' => ['Hyundai', 'Creta', 2021, 'TMAJ3815BMJ000004', 'Е321КХ35'],
             'appointments' => [
                 ['-1 day', '16:00:00', 'completed', 'Демо-выполненная запись: ремонт прокола.', ['Ремонт прокола']],
+                ['+6 days', '12:00:00', 'confirmed', 'Демо-запись: замена аккумулятора.', ['Замена аккумулятора']],
             ],
             'reviews' => [
                 ['Ремонт прокола', 5, 'Прокол устранили за полчаса, всё прозрачно по цене и без навязанных работ.'],
@@ -497,6 +507,40 @@ function seedDemoAppointmentsAndReviews(PDO $pdo): void
                 'invoice_check' => $invoice,
             ]);
         }
+    }
+}
+
+
+function seedDemoNotifications(PDO $pdo): void
+{
+    $notifications = [
+        ['ivan@example.com', 'Запись создана', 'Ваша запись на обслуживание принята и ожидает подтверждения администратора.', 0],
+        ['ivan@example.com', 'Рекомендация мастера', 'После диагностики электрики рекомендуем проверить состояние аккумулятора перед зимой.', 0],
+        ['anna@example.com', 'Запись подтверждена', 'Запись на диагностику перед покупкой подтверждена. Ждём вас в выбранное время.', 0],
+        ['sergey@example.com', 'Оплата получена', 'Платёж за замену тормозных колодок успешно проведён.', 1],
+        ['maria@example.com', 'Спасибо за отзыв', 'Ваш отзыв опубликован на сайте после модерации.', 1],
+    ];
+
+    $stmt = $pdo->prepare(
+        'INSERT INTO notifications (user_id, title, message, is_read)
+         SELECT u.id, :title, :message, :is_read
+         FROM users u
+         WHERE u.email = :email
+           AND NOT EXISTS (
+               SELECT 1 FROM notifications n
+               WHERE n.user_id = u.id AND n.title = :title_check AND n.message = :message_check
+           )'
+    );
+
+    foreach ($notifications as [$email, $title, $message, $isRead]) {
+        $stmt->execute([
+            'email' => $email,
+            'title' => $title,
+            'message' => $message,
+            'is_read' => $isRead,
+            'title_check' => $title,
+            'message_check' => $message,
+        ]);
     }
 }
 
