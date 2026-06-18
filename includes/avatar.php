@@ -50,6 +50,14 @@ function getInitials($full_name) {
  * @param array $file Массив $_FILES['avatar']
  * @return array [success => bool, message => string, path => string|null]
  */
+function formatUploadSize(int $bytes): string {
+    if ($bytes >= 1024 * 1024) {
+        return rtrim(rtrim(number_format($bytes / 1024 / 1024, 1, ',', ' '), '0'), ',') . ' МБ';
+    }
+
+    return rtrim(rtrim(number_format($bytes / 1024, 1, ',', ' '), '0'), ',') . ' КБ';
+}
+
 function validateAvatarUpload($file) {
     // Проверка на ошибки загрузки
     if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
@@ -70,18 +78,18 @@ function validateAvatarUpload($file) {
         ];
     }
     
-    // Проверка размера (максимум 5 МБ)
-    $max_size = 5 * 1024 * 1024; // 5 MB
+    // Проверка размера (по умолчанию 10 МБ; можно переопределить через UPLOAD_MAX_SIZE).
+    $max_size = defined('UPLOAD_MAX_SIZE') ? UPLOAD_MAX_SIZE : 10 * 1024 * 1024;
     if ($file['size'] > $max_size) {
         return [
             'success' => false,
-            'message' => 'Размер файла не должен превышать 5 МБ.',
+            'message' => 'Размер файла не должен превышать ' . formatUploadSize($max_size) . '.',
             'path' => null
         ];
     }
     
-    // Проверка MIME-типа
-    $allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    // Проверка MIME-типа. HEIC/HEIF часто приходят из галереи iPhone.
+    $allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'];
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime_type = finfo_file($finfo, $file['tmp_name']);
     finfo_close($finfo);
@@ -89,29 +97,32 @@ function validateAvatarUpload($file) {
     if (!in_array($mime_type, $allowed_types)) {
         return [
             'success' => false,
-            'message' => 'Недопустимый формат файла. Разрешены: JPEG, PNG, WebP, GIF.',
+            'message' => 'Недопустимый формат файла. Разрешены: JPEG, PNG, WebP, GIF, HEIC/HEIF.',
             'path' => null
         ];
     }
     
     // Проверка расширения файла
     $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    $allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    $allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'];
     
     if (!in_array($extension, $allowed_extensions)) {
         return [
             'success' => false,
-            'message' => 'Недопустимое расширение файла. Разрешены: jpg, jpeg, png, webp, gif.',
+            'message' => 'Недопустимое расширение файла. Разрешены: jpg, jpeg, png, webp, gif, heic, heif.',
             'path' => null
         ];
     }
     
-    // Проверка, что это действительно изображение
+    // Проверка, что это действительно изображение.
+    // getimagesize/GD не всегда умеют читать HEIC/HEIF, поэтому при Cloudinary
+    // такие файлы пропускаем дальше: Cloudinary примет и преобразует их сам.
     $image_info = getimagesize($file['tmp_name']);
-    if ($image_info === false) {
+    $is_cloud_heic = in_array($mime_type, ['image/heic', 'image/heif'], true) && isCloudinaryConfigured();
+    if ($image_info === false && !$is_cloud_heic) {
         return [
             'success' => false,
-            'message' => 'Загруженный файл не является изображением.',
+            'message' => 'Загруженный файл не является поддерживаемым изображением.',
             'path' => null
         ];
     }
@@ -119,7 +130,7 @@ function validateAvatarUpload($file) {
     // Проверка минимальных размеров
     $min_width = 100;
     $min_height = 100;
-    if ($image_info[0] < $min_width || $image_info[1] < $min_height) {
+    if ($image_info !== false && ($image_info[0] < $min_width || $image_info[1] < $min_height)) {
         return [
             'success' => false,
             'message' => 'Изображение должно быть не менее ' . $min_width . 'x' . $min_height . ' пикселей.',
@@ -133,8 +144,8 @@ function validateAvatarUpload($file) {
         'path' => null,
         'mime_type' => $mime_type,
         'extension' => $extension,
-        'width' => $image_info[0],
-        'height' => $image_info[1]
+        'width' => $image_info[0] ?? null,
+        'height' => $image_info[1] ?? null
     ];
 }
 
