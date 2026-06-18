@@ -265,6 +265,7 @@ require_once 'includes/header.php';
         border: 1px solid var(--gray-200);
         padding: 28px 30px;
         margin-bottom: 22px;
+        text-align: left;
     }
 
     .step-card h2 {
